@@ -17,7 +17,6 @@ public enum ErrorCode
     DuplicateTags,
     TagTypeWithoutName,
     InvalidCharacters,
-    InvalidTagType,
     BadTagType,
     TagNotFound,
     PostNotFound

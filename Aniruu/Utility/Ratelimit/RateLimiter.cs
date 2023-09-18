@@ -50,7 +50,6 @@ public sealed class RateLimiter : IRateLimiterPolicy<string>
                 sb.Append(path);
                 sb.Append(address.AsSpan());
 
-                this._logger.LogTrace("Setting fixed window limiter");
                 return RateLimitPartition.GetFixedWindowLimiter(
                     partitionKey: sb.ToString(),
                     _ => new FixedWindowRateLimiterOptions()

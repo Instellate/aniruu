@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices.JavaScript;
 using Aniruu.Database;
 using Aniruu.Database.Entities;
 using Aniruu.Request;
@@ -20,9 +19,6 @@ namespace Aniruu.Controllers;
 [ApiController]
 public class PostController : ControllerBase
 {
-    private static readonly string[] MediaArr = new string[]
-        { "jpeg", "gif", "png", "webp" };
-
     private static readonly char[] AllowedNameChars =
         "abcdefghijklmnopqrstuvwxyz1234567890_.:".ToCharArray();
 
@@ -44,7 +40,6 @@ public class PostController : ControllerBase
     [HttpPost]
     [Authorization(UserPermission.CreatePost)]
     [Produces("application/json")]
-    [Consumes("multipart/form-data")]
     [ProducesResponseType<PostCreated>(201)]
     [ProducesResponseType<Error>(400)]
     [ProducesResponseType<Error>(500)]
@@ -57,21 +52,6 @@ public class PostController : ControllerBase
         if (!this.ModelState.IsValid)
         {
             return StatusCode(500, new Error(500, ErrorCode.InternalError));
-        }
-
-        int count = 0;
-        HashSet<char> set = new(body.Tags.Length);
-        foreach (char c in body.Tags)
-        {
-            if (set.Add(c))
-            {
-                count++;
-            }
-        }
-
-        if (count != body.Tags.Length)
-        {
-            return BadRequest(new Error(400, ErrorCode.DuplicateTags));
         }
 
         ArraySegment<char> tags = body.Tags.ToCharArray();
@@ -95,11 +75,30 @@ public class PostController : ControllerBase
 
         sortedTags.Add(tags);
 
+        int count = 0;
+        HashSet<ArraySegment<char>> set = new(sortedTags.Count);
+        foreach (ArraySegment<char> chars in sortedTags)
+        {
+            if (set.Add(chars))
+            {
+                count++;
+            }
+        }
+
+        if (count != sortedTags.Count)
+        {
+            return BadRequest(new Error(400, ErrorCode.DuplicateTags));
+        }
+
         foreach (ArraySegment<char> arraySegment in sortedTags)
         {
-            if (arraySegment.Count > 0)
+            if (arraySegment.Count <= 0)
             {
-                return BadRequest(new Error(400, ErrorCode.BadTagType));
+                this._logger.LogInformation(
+                    "Tag name is {ArrSeg}",
+                    new string(arraySegment)
+                    );
+                return BadRequest(new Error(400, ErrorCode.InvalidCharacters));
             }
 
             bool isInvalid = true;
@@ -178,7 +177,6 @@ public class PostController : ControllerBase
                 else
                 {
                     string tagTypeStr = tagStr[..colonIndex];
-                    this._logger.LogInformation("{}", tagTypeStr);
                     if (tagTypeStr == "artist")
                     {
                         tagType = TagType.Artist;
@@ -201,7 +199,7 @@ public class PostController : ControllerBase
                     }
                     else
                     {
-                        return BadRequest(new Error(400, ErrorCode.InvalidTagType));
+                        return BadRequest(new Error(400, ErrorCode.BadTagType));
                     }
                 }
 
@@ -243,6 +241,7 @@ public class PostController : ControllerBase
         {
             return BadRequest(new Error(400, ErrorCode.NotAValidMediaType));
         }
+        // TODO: Make video like media a option as well, requires extraction of frame to make thumbnail
 
         this._db.Posts.Add(post);
         await this._db.SaveChangesAsync(ct);
@@ -270,7 +269,6 @@ public class PostController : ControllerBase
 
         string filename =
             $"{post.Checksum}{(size is not null ? "-" + size + ".webp" : post.DefaultExtension)}";
-        this._logger.LogInformation("{Filename}", filename);
 
         GetObjectArgs args = new GetObjectArgs()
             .WithBucket("aniruu")
@@ -348,7 +346,6 @@ public class PostController : ControllerBase
             page = 1;
         }
 
-        _logger.LogInformation("{Page}", (page - 1) * 10);
         IIncludableQueryable<Post, User> postsQuery =
             this._db.Posts
                 .OrderByDescending(p => p.CreatedAt)
@@ -463,7 +460,15 @@ public class PostController : ControllerBase
         IEnumerable<string> tags = this._db.Tags
             .Where(t => EF.Functions.Like(t.Name, formattedTag))
             .Select(t => t.Name);
+        // TODO: Optimise above query
 
         return Ok(tags);
+    }
+
+    [HttpPatch("post/{id}")]
+    [Produces("application/json")]
+    public IActionResult EditPost(EditPostBody body)
+    {
+        return Ok();
     }
 }

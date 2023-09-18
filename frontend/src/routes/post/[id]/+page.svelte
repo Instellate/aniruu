@@ -1,7 +1,7 @@
 <script lang="ts">
     import { client } from '$lib';
     import PostTags from '$lib/PostTags.svelte';
-    import { preference, setSidebarContent, userStore } from '$lib/stores';
+    import { preference, setSidebarContent } from '$lib/stores';
     import type { PageData } from './$types';
 
     export let data: PageData;

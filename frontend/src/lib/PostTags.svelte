@@ -35,27 +35,35 @@
     <strong class="mb-2">Tags:</strong>
     <div class="flex flex-row flex-wrap gap-1.5">
         {#each artist as tag}
-            <div class="bg-yellow-400 p-1 px-2 rounded-md">
-                <span class="text-black text-sm">{tag}</span>
-            </div>
+            <a href="/?tags={tag}">
+                <div class="bg-yellow-400 p-1 px-2 rounded-md">
+                    <span class="text-black text-sm">{tag}</span>
+                </div>
+            </a>
         {/each}
 
         {#each character as tag}
-            <div class="bg-green-400 p-1 px-2 rounded-md">
-                <span class="text-black text-sm">{tag}</span>
-            </div>
+            <a href="/?tags={tag}">
+                <div class="bg-green-400 p-1 px-2 rounded-md">
+                    <span class="text-black text-sm">{tag}</span>
+                </div>
+            </a>
         {/each}
 
         {#each copyright as tag}
-            <div class="bg-pink-400 p-1 px-2 rounded-md">
-                <span class="text-black text-sm">{tag}</span>
-            </div>
+            <a href="/?tags={tag}">
+                <div class="bg-pink-400 p-1 px-2 rounded-md">
+                    <span class="text-black text-sm">{tag}</span>
+                </div>
+            </a>
         {/each}
 
         {#each general as tag}
-            <div class="bg-cyan-400 p-1 px-2 rounded-md">
-                <span class="text-black text-sm">{tag}</span>
-            </div>
+            <a href="/?tags={tag}">
+                <div class="bg-cyan-400 p-1 px-2 rounded-md text-black text-sm">
+                    {tag}
+                </div>
+            </a>
         {/each}
     </div>
 </div>

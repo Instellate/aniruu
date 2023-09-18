@@ -100,19 +100,15 @@
     </svelte:fragment>
 
     <svelte:fragment slot="sidebarLeft">
-        <nav class="list-nav">
-            <ul class="p-5 flex flex-col gap-3">
-                <li>
-                    <SearchBar />
-                </li>
-                {#if $sidebarContent}
-                    <svelte:component
-                        this={$sidebarContent.component}
-                        {...$sidebarContent.data}
-                    />
-                {/if}
-            </ul>
-        </nav>
+        <div class="p-5 flex flex-col gap-3">
+            <SearchBar />
+            {#if $sidebarContent}
+                <svelte:component
+                    this={$sidebarContent.component}
+                    {...$sidebarContent.data}
+                />
+            {/if}
+        </div>
     </svelte:fragment>
 
     <slot />
