@@ -1,6 +1,6 @@
 namespace Aniruu.Response;
 
-public sealed class Error
+public struct Error
 {
     public int StatusCode { get; }
     public ErrorCode ErrorCode { get; }

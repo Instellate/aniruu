@@ -54,6 +54,11 @@ public class PostController : ControllerBase
         CancellationToken ct = default
     )
     {
+        if (!this.ModelState.IsValid)
+        {
+            return StatusCode(500, new Error(500, ErrorCode.InternalError));
+        }
+
         int count = 0;
         HashSet<char> set = new(body.Tags.Length);
         foreach (char c in body.Tags)
@@ -63,14 +68,10 @@ public class PostController : ControllerBase
                 count++;
             }
         }
+
         if (count != body.Tags.Length)
         {
-            return BadRequest();
-        }
-        
-        if (!this.ModelState.IsValid)
-        {
-            return StatusCode(500, new Error(500, ErrorCode.InternalError));
+            return BadRequest(new Error(400, ErrorCode.DuplicateTags));
         }
 
         ArraySegment<char> tags = body.Tags.ToCharArray();
@@ -96,9 +97,9 @@ public class PostController : ControllerBase
 
         foreach (ArraySegment<char> arraySegment in sortedTags)
         {
-            if (arraySegment.Count > 0 && arraySegment[0] == '-')
+            if (arraySegment.Count > 0)
             {
-                return BadRequest();
+                return BadRequest(new Error(400, ErrorCode.BadTagType));
             }
 
             bool isInvalid = true;
@@ -115,15 +116,23 @@ public class PostController : ControllerBase
             }
 
             endLoopEarly:
-            int colonAmount = arraySegment.Count(c => c == ':');
+            int colonAmount = 0;
+            foreach (char c in arraySegment)
+            {
+                if (c == ':')
+                {
+                    colonAmount++;
+                }
+            }
+
             if (colonAmount > 1)
             {
-                return BadRequest();
+                return BadRequest(new Error(400, ErrorCode.InvalidCharacters));
             }
 
             if (isInvalid)
             {
-                return BadRequest();
+                return BadRequest(new Error(400, ErrorCode.InvalidCharacters));
             }
         }
 
@@ -153,7 +162,7 @@ public class PostController : ControllerBase
             }
             catch (ArgumentOutOfRangeException)
             {
-                return BadRequest();
+                return BadRequest(new Error(400, ErrorCode.TagTypeWithoutName));
             }
 
             Tag? dbTag = await this._db.Tags
@@ -192,7 +201,7 @@ public class PostController : ControllerBase
                     }
                     else
                     {
-                        return BadRequest();
+                        return BadRequest(new Error(400, ErrorCode.InvalidTagType));
                     }
                 }
 
@@ -256,7 +265,7 @@ public class PostController : ControllerBase
         Post? post = await this._db.Posts.FindAsync(id);
         if (post is null)
         {
-            return NotFound();
+            return NotFound(new Error(404, ErrorCode.PostNotFound));
         }
 
         string filename =
@@ -281,7 +290,7 @@ public class PostController : ControllerBase
         }
         catch (ObjectNotFoundException)
         {
-            return NotFound();
+            return NotFound(new Error(404, ErrorCode.PostNotFound));
         }
 
         return Empty;
@@ -338,7 +347,7 @@ public class PostController : ControllerBase
         {
             page = 1;
         }
-        
+
         _logger.LogInformation("{Page}", (page - 1) * 10);
         IIncludableQueryable<Post, User> postsQuery =
             this._db.Posts
@@ -379,7 +388,7 @@ public class PostController : ControllerBase
 
                 if (!all)
                 {
-                    return BadRequest();
+                    return BadRequest(new Error(400, ErrorCode.InvalidCharacters));
                 }
 
                 if (tag[0] == '-')
@@ -389,7 +398,7 @@ public class PostController : ControllerBase
                         this._db.Tags.FirstOrDefault(t => t.Name == tagWithoutDash);
                     if (dbTag is null)
                     {
-                        return NotFound();
+                        return NotFound(new Error(404, ErrorCode.TagNotFound));
                     }
 
                     disallow.Add(dbTag.Id);
@@ -399,7 +408,7 @@ public class PostController : ControllerBase
                     Tag? dbTag = this._db.Tags.FirstOrDefault(t => t.Name == tag);
                     if (dbTag is null)
                     {
-                        return NotFound();
+                        return NotFound(new Error(404, ErrorCode.TagNotFound));
                     }
 
                     allow.Add(dbTag.Id);

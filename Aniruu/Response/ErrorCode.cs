@@ -13,5 +13,12 @@ public enum ErrorCode
     Unauthorized,
     Forbidden,
     NotImplemented,
-    NoPostFound
+    NoPostFound,
+    DuplicateTags,
+    TagTypeWithoutName,
+    InvalidCharacters,
+    InvalidTagType,
+    BadTagType,
+    TagNotFound,
+    PostNotFound
 }
