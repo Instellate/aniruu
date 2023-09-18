@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aniruu", "Aniruu\Aniruu.csproj", "{1F05896B-0876-42AA-ABA8-A001FEEFEC67}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Media", "Media\Media.csproj", "{4FC23013-DB07-4B9A-86B0-5DC5A5A2D6A1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1F05896B-0876-42AA-ABA8-A001FEEFEC67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F05896B-0876-42AA-ABA8-A001FEEFEC67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F05896B-0876-42AA-ABA8-A001FEEFEC67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F05896B-0876-42AA-ABA8-A001FEEFEC67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4FC23013-DB07-4B9A-86B0-5DC5A5A2D6A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FC23013-DB07-4B9A-86B0-5DC5A5A2D6A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4FC23013-DB07-4B9A-86B0-5DC5A5A2D6A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4FC23013-DB07-4B9A-86B0-5DC5A5A2D6A1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

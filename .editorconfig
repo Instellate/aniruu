@@ -1,0 +1,32 @@
+root = true
+
+[*]
+indent_style = space
+max_line_length = 90
+
+[*.cs]
+# Disable usage of var
+csharp_style_var_for_built_in_types = false:error
+csharp_style_var_when_type_is_apparent = false:error
+csharp_style_var_elsewhere = false:error
+
+# Enforce Async on async methods
+dotnet_naming_rule.async_methods_should_be_async_suffix.severity = error
+dotnet_naming_rule.async_methods_should_be_async_suffix.symbols = async_methods
+dotnet_naming_rule.async_methods_should_be_async_suffix.style = async_suffix
+dotnet_naming_style.async_suffix.required_suffix = Async
+dotnet_naming_style.async_suffix.capitalization = pascal_case
+dotnet_naming_symbols.async_methods.applicable_kinds = method
+dotnet_naming_symbols.async_methods.required_modifiers = async
+
+# Prefer this. for fields and properties
+dotnet_style_qualification_for_field = true:warning
+dotnet_style_qualification_for_property = true:warning
+
+# Various
+csharp_prefer_braces = true:error
+indent_size = 4
+insert_final_newline = true
+charset = utf-8
+csharp_preserve_single_line_statements = false
+csharp_wrap_arguments_style=chop_if_long
