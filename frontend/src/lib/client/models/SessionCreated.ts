@@ -6,4 +6,3 @@
 export type SessionCreated = {
     sessionToken: string;
 };
-

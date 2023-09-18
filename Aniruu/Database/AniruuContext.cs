@@ -10,7 +10,7 @@ public class AniruuContext : DbContext
     }
 
     public DbSet<User> Users { get; init; } = null!;
-    public DbSet<UserConnection> Connections { get; init; }= null!;
+    public DbSet<UserConnection> Connections { get; init; } = null!;
     public DbSet<Session> Sessions { get; init; } = null!;
     public DbSet<Post> Posts { get; init; } = null!;
 

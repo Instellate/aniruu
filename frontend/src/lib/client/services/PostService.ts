@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { EditPostBody } from '../models/EditPostBody';
 import type { PostCreated } from '../models/PostCreated';
 import type { PostResponse } from '../models/PostResponse';
 
@@ -9,7 +10,6 @@ import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 
 export class PostService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
 
     /**
@@ -30,22 +30,22 @@ export class PostService {
         length?: number,
         name?: string,
         fileName?: string,
-        body?: any,
+        body?: any
     ): CancelablePromise<PostCreated> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/Post',
             query: {
-                'body': body,
+                body: body
             },
             formData: {
-                'ContentType': contentType,
-                'ContentDisposition': contentDisposition,
-                'Headers': headers,
-                'Length': length,
-                'Name': name,
-                'FileName': fileName,
-            },
+                ContentType: contentType,
+                ContentDisposition: contentDisposition,
+                Headers: headers,
+                Length: length,
+                Name: name,
+                FileName: fileName
+            }
         });
     }
 
@@ -57,15 +57,15 @@ export class PostService {
      */
     public postGetPosts(
         page: number = 1,
-        tags?: Array<string> | null,
+        tags?: Array<string> | null
     ): CancelablePromise<Array<PostResponse>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/api/Post',
             query: {
-                'page': page,
-                'tags': tags,
-            },
+                page: page,
+                tags: tags
+            }
         });
     }
 
@@ -75,19 +75,16 @@ export class PostService {
      * @returns binary
      * @throws ApiError
      */
-    public postGetImage(
-        id: number,
-        size?: string | null,
-    ): CancelablePromise<Blob> {
+    public postGetImage(id: number, size?: string | null): CancelablePromise<Blob> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/api/Post/{id}',
             path: {
-                'id': id,
+                id: id
             },
             query: {
-                'size': size,
-            },
+                size: size
+            }
         });
     }
 
@@ -96,15 +93,13 @@ export class PostService {
      * @returns PostResponse
      * @throws ApiError
      */
-    public postGetImageData(
-        id: number,
-    ): CancelablePromise<PostResponse> {
+    public postGetImageData(id: number): CancelablePromise<PostResponse> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/api/Post/{id}/data',
             path: {
-                'id': id,
-            },
+                id: id
+            }
         });
     }
 
@@ -113,16 +108,30 @@ export class PostService {
      * @returns string
      * @throws ApiError
      */
-    public postSearchTags(
-        tag?: string,
-    ): CancelablePromise<Array<string>> {
+    public postSearchTags(tag?: string): CancelablePromise<Array<string>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/api/Post/post/tags',
             query: {
-                'tag': tag,
-            },
+                tag: tag
+            }
         });
     }
 
+    /**
+     * @param id
+     * @param body
+     * @returns binary
+     * @throws ApiError
+     */
+    public postEditPost(id: number, body: EditPostBody): CancelablePromise<Blob> {
+        return this.httpRequest.request({
+            method: 'PATCH',
+            url: '/api/Post/post/{id}',
+            path: {
+                id: id
+            },
+            body: body
+        });
+    }
 }

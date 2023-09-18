@@ -5,8 +5,7 @@
         AppBar,
         storePopup,
         type PopupSettings,
-        popup,
-        LightSwitch
+        popup
     } from '@skeletonlabs/skeleton';
     import {
         computePosition,
@@ -52,6 +51,10 @@
         placement: 'bottom-end'
     };
 </script>
+
+<svelte:head>
+    <title>Upload a post</title>
+</svelte:head>
 
 <AppShell slotSidebarLeft="bg-surface-900 w-80 {$hideSidebarStore ? 'hidden' : ''}">
     <svelte:fragment slot="header">

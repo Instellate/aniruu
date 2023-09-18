@@ -16,4 +16,3 @@ export type PostResponse = {
     createdBy: PostAuthorResponse;
     createdAt: string;
 };
-

@@ -3,9 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { TagType } from './TagType';
-
-export type PostTagsResponse = {
-    type: TagType;
-    name: string;
+export type EditPostBody = {
+    source?: string;
+    tags?: string;
 };

@@ -7,4 +7,3 @@ export type ClaimUsername = {
     name: string;
     temporaryToken: string;
 };
-

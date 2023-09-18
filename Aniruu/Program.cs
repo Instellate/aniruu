@@ -42,7 +42,7 @@ builder.Services.AddDbContextFactory<AniruuContext>(o =>
 builder.Services.AddSingleton<OAuth2>();
 
 builder.Services.AddSingleton<Limits>();
-builder.Services.AddSingleton<IMinioClient, MinioClient>(s =>
+builder.Services.AddSingleton<IMinioClient, MinioClient>(_ =>
     new MinioClient()
         .WithEndpoint("localhost", 9000)
         .WithCredentials(

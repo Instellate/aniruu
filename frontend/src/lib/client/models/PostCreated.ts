@@ -6,4 +6,3 @@
 export type PostCreated = {
     postId: number;
 };
-

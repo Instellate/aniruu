@@ -9,7 +9,7 @@ public class DesignTimeFactory : IDesignTimeDbContextFactory<AniruuContext>
     {
         DbContextOptionsBuilder<AniruuContext> builder = new();
         builder.UseNpgsql("Host=localhost:5432;Database=aniruu;Username=postgres");
-            // .UseSnakeCaseNamingConvention(); TODO: Enable this when it works in .NET 8.
+        // .UseSnakeCaseNamingConvention(); TODO: Enable this when it works in .NET 8.
 
         return new AniruuContext(builder.Options);
     }

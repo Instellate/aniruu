@@ -26,7 +26,7 @@ if (browser) {
     const token = window.localStorage.getItem('token');
     if (token !== null) {
         userStore.set({
-            sessionToken: token,
+            sessionToken: token
         });
     }
 }

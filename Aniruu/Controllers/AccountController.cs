@@ -80,7 +80,7 @@ public class AccountController : ControllerBase
             }
         }
 
-        if ((string?)Request.Headers.UserAgent is null)
+        if ((string?)this.Request.Headers.UserAgent is null)
         {
             return BadRequest();
         }
@@ -110,7 +110,7 @@ public class AccountController : ControllerBase
             Session session = new()
             {
                 Id = Guid.NewGuid(),
-                UserAgent = Request.Headers.UserAgent!,
+                UserAgent = this.Request.Headers.UserAgent!,
                 UserId = user.UserId,
                 Type = UserConnectionType.Google,
             };
@@ -182,7 +182,7 @@ public class AccountController : ControllerBase
             return BadRequest(new Error(400, ErrorCode.NameTooBig));
         }
 
-        if ((string?)Request.Headers.UserAgent is null)
+        if ((string?)this.Request.Headers.UserAgent is null)
         {
             return BadRequest(new Error(400, ErrorCode.NoUserAgent));
         }
@@ -230,7 +230,7 @@ public class AccountController : ControllerBase
             }
         }
 
-        if (_db.Users.FirstOrDefault(u =>
+        if (this._db.Users.FirstOrDefault(u =>
                 u.Username == body.Name) is not null)
         {
             return Conflict(new Error(409, ErrorCode.NameAlreadyInUsage));
@@ -266,7 +266,7 @@ public class AccountController : ControllerBase
         Session session = new()
         {
             User = user,
-            UserAgent = Request.Headers.UserAgent!,
+            UserAgent = this.Request.Headers.UserAgent!,
             Type = UserConnectionType.Google
         };
 

@@ -76,7 +76,7 @@ public class PostController : ControllerBase
         sortedTags.Add(tags);
 
         int count = 0;
-        HashSet<ArraySegment<char>> set = new(sortedTags.Count);
+        HashSet<ArraySegment<char>> set = new();
         foreach (ArraySegment<char> chars in sortedTags)
         {
             if (set.Add(chars))
@@ -94,10 +94,6 @@ public class PostController : ControllerBase
         {
             if (arraySegment.Count <= 0)
             {
-                this._logger.LogInformation(
-                    "Tag name is {ArrSeg}",
-                    new string(arraySegment)
-                    );
                 return BadRequest(new Error(400, ErrorCode.InvalidCharacters));
             }
 
@@ -114,7 +110,7 @@ public class PostController : ControllerBase
                 }
             }
 
-            endLoopEarly:
+        endLoopEarly:
             int colonAmount = 0;
             foreach (char c in arraySegment)
             {
@@ -145,7 +141,7 @@ public class PostController : ControllerBase
             Rating = body.Rating,
             Checksum = checksum,
             DefaultExtension = Path.GetExtension(file.FileName.Replace("jpg", "jpeg")),
-            UserId = (long)HttpContext.Items["User"]!,
+            UserId = ((User)this.HttpContext.Items["User"]!).Id,
             Source = body.Source
         };
 
@@ -465,10 +461,186 @@ public class PostController : ControllerBase
         return Ok(tags);
     }
 
+    [Authorization]
     [HttpPatch("post/{id}")]
     [Produces("application/json")]
-    public IActionResult EditPost(EditPostBody body)
+    public IActionResult EditPost(long id, EditPostBody body)
     {
-        return Ok();
+        User? user = (User?)this.HttpContext.Items["User"];
+        if (user is null)
+        {
+            return Unauthorized(new Error(401, ErrorCode.Unauthorized));
+        }
+
+        Post? post = this._db.Posts
+            .Include(p => p.Tags)
+            .ThenInclude(t => t.Tag)
+            .FirstOrDefault(p => p.Id == id);
+
+        if (post is null)
+        {
+            return NotFound(new Error(404, ErrorCode.PostNotFound));
+        }
+
+        if (post.UserId != user.Id && (user.Permission & UserPermission.EditPost) == 0)
+        {
+            return StatusCode(403, new Error(403, ErrorCode.Forbidden));
+        }
+
+        if (body.Source is not null)
+        {
+            post.Source = body.Source;
+        }
+
+        if (body.Tags is not null)
+        {
+            ArraySegment<char> segTags = body.Tags.ToCharArray();
+            List<ArraySegment<char>> sortedTags = new();
+
+            int index = ((IList<char>)segTags).IndexOf(' ');
+            while (index != -1)
+            {
+                sortedTags.Add(segTags[..index]);
+                try
+                {
+                    segTags = segTags[++index..];
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    break;
+                }
+
+                index = ((IList<char>)segTags).IndexOf(' ');
+            }
+
+            sortedTags.Add(segTags);
+
+            List<(TagType, string)> tags = new(sortedTags.Count);
+            foreach (ArraySegment<char> arrSegTag in sortedTags)
+            {
+                foreach (char c in arrSegTag)
+                {
+                    bool any = false;
+                    foreach (char ac in AllowedNameChars)
+                    {
+                        if (ac == c)
+                        {
+                            any = true;
+                            break;
+                        }
+                    }
+
+                    if (!any)
+                    {
+                        return BadRequest(new Error(400, ErrorCode.InvalidCharacters));
+                    }
+                }
+
+                string tagStr = new(arrSegTag);
+
+                int colonIndex = tagStr.IndexOf(':');
+                string tagName;
+                try
+                {
+                    tagName = colonIndex == -1 ? tagStr : tagStr[(colonIndex + 1)..];
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    return BadRequest(new Error(400, ErrorCode.TagTypeWithoutName));
+                }
+
+                TagType tagType;
+                if (colonIndex == -1)
+                {
+                    tagType = TagType.General;
+                }
+                else
+                {
+                    string tagTypeStr = tagStr[..colonIndex];
+                    if (tagTypeStr == "artist")
+                    {
+                        tagType = TagType.Artist;
+                    }
+                    else if (tagTypeStr == "general")
+                    {
+                        tagType = TagType.General;
+                    }
+                    else if (tagTypeStr == "copyright")
+                    {
+                        tagType = TagType.Copyright;
+                    }
+                    else if (tagTypeStr == "character")
+                    {
+                        tagType = TagType.Character;
+                    }
+                    else if (tagTypeStr == "meta")
+                    {
+                        tagType = TagType.MetaData;
+                    }
+                    else
+                    {
+                        return BadRequest(new Error(400, ErrorCode.BadTagType));
+                    }
+                }
+
+                tags.Add((tagType, tagName));
+            }
+
+            List<(TagType Type, string name)> tagsToAdd = new();
+            Dictionary<string, PostTags> dict = new(post.Tags.Count);
+            foreach (PostTags tag in post.Tags)
+            {
+                dict.Add(tag.Tag.Name, tag);
+            }
+
+            foreach ((TagType, string) entry in tags)
+            {
+                if (!dict.ContainsKey(entry.Item2))
+                {
+                    tagsToAdd.Add(entry);
+                }
+                else
+                {
+                    dict.Remove(entry.Item2);
+                }
+            }
+
+            foreach ((string _, PostTags tagToRemove) in dict)
+            {
+                this._db.PostTags.Remove(tagToRemove);
+            }
+
+            foreach ((TagType, string) tagToAdd in tagsToAdd)
+            {
+                Tag? tag = this._db.Tags.FirstOrDefault(t => t.Name == tagToAdd.Item2);
+                if (tag is null)
+                {
+                    Tag newTag = new()
+                    {
+                        Name = tagToAdd.Item2,
+                        Type = tagToAdd.Item1
+                    };
+                    PostTags postTags = new()
+                    {
+                        Tag = newTag,
+                        Post = post,
+                    };
+                    this._db.Tags.Add(newTag);
+                    this._db.PostTags.Add(postTags);
+                }
+                else
+                {
+                    PostTags postTags = new()
+                    {
+                        Tag = tag,
+                        Post = post,
+                    };
+                    this._db.PostTags.Add(postTags);
+                }
+            }
+        }
+
+        this._db.SaveChanges();
+        return NoContent();
     }
 }

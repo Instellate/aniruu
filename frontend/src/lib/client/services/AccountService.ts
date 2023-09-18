@@ -10,7 +10,6 @@ import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 
 export class AccountService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
 
     /**
@@ -20,17 +19,14 @@ export class AccountService {
      * @returns void
      * @throws ApiError
      */
-    public accountRedirectUrl(
-        code?: string,
-        state?: string,
-    ): CancelablePromise<void> {
+    public accountRedirectUrl(code?: string, state?: string): CancelablePromise<void> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/api/Account/redirect',
             query: {
-                'code': code,
-                'state': state,
-            },
+                code: code,
+                state: state
+            }
         });
     }
 
@@ -42,7 +38,7 @@ export class AccountService {
     public accountGetAuthUri(): CancelablePromise<Array<AuthUri>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/api/Account/authUris',
+            url: '/api/Account/authUris'
         });
     }
 
@@ -52,13 +48,11 @@ export class AccountService {
      * @returns SessionCreated
      * @throws ApiError
      */
-    public accountClaimUsername(
-        body: ClaimUsername,
-    ): CancelablePromise<SessionCreated> {
+    public accountClaimUsername(body: ClaimUsername): CancelablePromise<SessionCreated> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/Account/claimUsername',
-            body: body,
+            body: body
         });
     }
 
@@ -68,16 +62,13 @@ export class AccountService {
      * @returns void
      * @throws ApiError
      */
-    public accountDeleteSession(
-        id: string,
-    ): CancelablePromise<void> {
+    public accountDeleteSession(id: string): CancelablePromise<void> {
         return this.httpRequest.request({
             method: 'DELETE',
             url: '/api/Account/session/{id}',
             path: {
-                'id': id,
-            },
+                id: id
+            }
         });
     }
-
 }

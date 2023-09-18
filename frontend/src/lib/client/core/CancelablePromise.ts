@@ -3,7 +3,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export class CancelError extends Error {
-
     constructor(message: string) {
         super(message);
         this.name = 'CancelError';
@@ -70,24 +69,24 @@ export class CancelablePromise<T> implements Promise<T> {
             };
 
             Object.defineProperty(onCancel, 'isResolved', {
-                get: (): boolean => this.#isResolved,
+                get: (): boolean => this.#isResolved
             });
 
             Object.defineProperty(onCancel, 'isRejected', {
-                get: (): boolean => this.#isRejected,
+                get: (): boolean => this.#isRejected
             });
 
             Object.defineProperty(onCancel, 'isCancelled', {
-                get: (): boolean => this.#isCancelled,
+                get: (): boolean => this.#isCancelled
             });
 
             return executor(onResolve, onReject, onCancel as OnCancel);
         });
     }
 
-     get [Symbol.toStringTag]() {
-            return "Cancellable Promise";
-     }
+    get [Symbol.toStringTag]() {
+        return 'Cancellable Promise';
+    }
 
     public then<TResult1 = T, TResult2 = never>(
         onFulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,

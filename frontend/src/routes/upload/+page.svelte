@@ -1,11 +1,8 @@
 <script lang="ts">
     import { hideSidebar, userStore } from '$lib/stores';
     import { FileDropzone } from '@skeletonlabs/skeleton';
-    import type { PageData } from './$types';
     import type { CreateBody, PostCreated } from '$lib/client';
     import { goto } from '$app/navigation';
-
-    export let data: PageData;
 
     let tags: string;
     let rating: number;
@@ -51,9 +48,9 @@
             <FileDropzone name="files" bind:files />
             <textarea class="textarea" rows="4" placeholder="Tags..." bind:value={tags} />
             <select class="select" placeholder="Choose a rating..." bind:value={rating}>
-                <option value=0>Safe</option>
-                <option value=1>Questionable</option>
-                <option value=2>Explicit</option>
+                <option value="0">Safe</option>
+                <option value="1">Questionable</option>
+                <option value="2">Explicit</option>
             </select>
             <input
                 type="text"

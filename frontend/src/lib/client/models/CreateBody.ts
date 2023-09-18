@@ -10,4 +10,3 @@ export type CreateBody = {
     rating: PostRating;
     source?: string;
 };
-

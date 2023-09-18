@@ -4,7 +4,6 @@ using Aniruu.Database.Entities;
 using Aniruu.Response;
 using Aniruu.Utility;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Primitives;
 
 namespace Aniruu.Middleware;
 
@@ -79,12 +78,18 @@ public class AuthorizationMiddleware
         Session? session = db.Sessions
             .Include(s => s.User)
             .FirstOrDefault(s => s.Id == id);
-        
+
         if (session is null)
         {
             Error error = new(401, ErrorCode.Unauthorized);
             ctx.Response.StatusCode = 401;
             return ctx.Response.WriteAsJsonAsync(error);
+        }
+
+        if (authAttr.Permission == 0)
+        {
+            ctx.Items["User"] = session.User;
+            return this._next(ctx);
         }
 
         if ((session.User.Permission & authAttr.Permission) == 0)
@@ -94,7 +99,7 @@ public class AuthorizationMiddleware
             return ctx.Response.WriteAsJsonAsync(error);
         }
 
-        ctx.Items["User"] = session.UserId;
+        ctx.Items["User"] = session.User;
         return this._next(ctx);
     }
 }

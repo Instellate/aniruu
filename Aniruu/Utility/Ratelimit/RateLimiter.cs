@@ -1,13 +1,8 @@
 using System.Collections.Frozen;
-using System.Net;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Threading.RateLimiting;
 using Aniruu.Response;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.Extensions.Primitives;
 
 namespace Aniruu.Utility.Ratelimit;
 
@@ -65,7 +60,7 @@ public sealed class RateLimiter : IRateLimiterPolicy<string>
         return RateLimitPartition.GetNoLimiter(string.Empty);
     }
 
-    public Func<OnRejectedContext, CancellationToken, ValueTask>? OnRejected =>
+    public Func<OnRejectedContext, CancellationToken, ValueTask> OnRejected =>
         async (context, ct) =>
         {
             context.HttpContext.Response.StatusCode = 429;

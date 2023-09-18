@@ -9,4 +9,3 @@ export type Error = {
     statusCode: number;
     errorCode: ErrorCode;
 };
-

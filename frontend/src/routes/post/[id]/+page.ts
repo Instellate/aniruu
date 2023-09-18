@@ -27,6 +27,6 @@ export const load = (async ({ params }) => {
         }
         throw error(500, {
             message: 'internal'
-        })
+        });
     }
 }) satisfies PageLoad;

@@ -12,13 +12,15 @@ import { PostService } from './services/PostService';
 type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
 
 export class ApiClient {
-
     public readonly account: AccountService;
     public readonly post: PostService;
 
     public readonly request: BaseHttpRequest;
 
-    constructor(config?: Partial<OpenAPIConfig>, HttpRequest: HttpRequestConstructor = FetchHttpRequest) {
+    constructor(
+        config?: Partial<OpenAPIConfig>,
+        HttpRequest: HttpRequestConstructor = FetchHttpRequest
+    ) {
         this.request = new HttpRequest({
             BASE: config?.BASE ?? 'http://localhost:5100',
             VERSION: config?.VERSION ?? '0.0.1',
@@ -28,11 +30,10 @@ export class ApiClient {
             USERNAME: config?.USERNAME,
             PASSWORD: config?.PASSWORD,
             HEADERS: config?.HEADERS,
-            ENCODE_PATH: config?.ENCODE_PATH,
+            ENCODE_PATH: config?.ENCODE_PATH
         });
 
         this.account = new AccountService(this.request);
         this.post = new PostService(this.request);
     }
 }
-

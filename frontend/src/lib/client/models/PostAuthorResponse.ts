@@ -7,4 +7,3 @@ export type PostAuthorResponse = {
     id: number;
     name: string;
 };
-

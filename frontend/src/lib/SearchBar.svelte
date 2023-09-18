@@ -36,13 +36,15 @@
         manipulatedInput = tag.startsWith('-') ? tag.slice(1) : tag;
 
         let tags = await client.post.postSearchTags(manipulatedInput);
-        options = tags.sort((a, b) => a.localeCompare(b)).map((t) => {
-            t = tag?.startsWith('-') ? '-' + t  : t;
-            return {
-                label: t,
-                value: t
-            };
-        });
+        options = tags
+            .sort((a, b) => a.localeCompare(b))
+            .map((t) => {
+                t = tag?.startsWith('-') ? '-' + t : t;
+                return {
+                    label: t,
+                    value: t
+                };
+            });
 
         if (htmlInput !== null) htmlInput.focus();
     }, 300);
@@ -59,9 +61,9 @@
             const splitOutput = input.trim().split(' ');
             const params = new URLSearchParams();
 
-            splitOutput.forEach(t => params.append("tags", t));
-            await goto(`/?${params.toString()}`)
-            
+            splitOutput.forEach((t) => params.append('tags', t));
+            await goto(`/?${params.toString()}`);
+
             const elem = document.elementFromPoint(0, 0) as HTMLButtonElement;
             elem.click();
         }

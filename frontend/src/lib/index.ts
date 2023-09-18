@@ -9,7 +9,7 @@ export const client = new ApiClient({
 
 userStore.subscribe((u) => {
     if (u) {
-        client.request.config.TOKEN = `Bearer ${u.sessionToken}`;
+        client.request.config.TOKEN = u.sessionToken;
     } else {
         client.request.config.TOKEN = undefined;
     }

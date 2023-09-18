@@ -1,7 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
-
 namespace Aniruu.Utility.Ratelimit;
 
 public sealed class RateLimitRule
@@ -12,7 +8,7 @@ public sealed class RateLimitRule
 
     public RateLimitRule(IConfigurationSection section)
     {
-        
+
         ReadOnlySpan<char> expireTimeSpan = section["ExpireTime"].AsSpan();
         if (expireTimeSpan.EndsWith("s"))
         {
@@ -34,7 +30,7 @@ public sealed class RateLimitRule
         }
         else
         {
-            ExpireTime = TimeSpan.Zero;
+            this.ExpireTime = TimeSpan.Zero;
         }
 
         this.IsPerUniqueUri = bool.Parse(section["IsPerUniqueUri"]!);

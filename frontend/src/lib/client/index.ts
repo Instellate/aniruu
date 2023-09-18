@@ -13,6 +13,7 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 export type { AuthUri } from './models/AuthUri';
 export type { ClaimUsername } from './models/ClaimUsername';
 export type { CreateBody } from './models/CreateBody';
+export type { EditPostBody } from './models/EditPostBody';
 export type { Error } from './models/Error';
 export { ErrorCode } from './models/ErrorCode';
 export type { IHeaderDictionary } from './models/IHeaderDictionary';
