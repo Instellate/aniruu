@@ -11,15 +11,22 @@ export interface User {
     sessionToken: string;
 }
 
+export interface Preference {
+    prefersOriginalSize: boolean;
+}
+
 export const sidebarContent = writable<SidebarType | null>();
 export const hideSidebarStore = writable<boolean>(false);
+export const preference = writable<Preference>({
+    prefersOriginalSize: false
+});
 export const userStore = writable<User | null>(null);
 
 if (browser) {
     const token = window.localStorage.getItem('token');
     if (token !== null) {
         userStore.set({
-            sessionToken: token
+            sessionToken: token,
         });
     }
 }
