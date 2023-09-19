@@ -5,6 +5,7 @@
     export let tags: PostTagsResponse[];
     export let editMode: Writable<boolean>;
     export let source: string | undefined;
+    export let deletePostFunc: () => Promise<void>;
 
     tags.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -83,6 +84,11 @@
 
     <strong class="my-2">Actions:</strong>
     <div class="ml-2 text-blue-400">
-        <button on:click={() => editMode.set(true)}>Edit</button>
+        <button on:click={() => editMode.set(true)} class="ml-2 text-blue-400"
+            >Edit</button
+        >
+    </div>
+    <div class="ml-2 text-blue-400">
+        <button on:click={deletePostFunc} class="ml-2 mt-2 text-blue-400">Delete</button>
     </div>
 </div>

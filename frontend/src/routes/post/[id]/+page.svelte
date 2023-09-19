@@ -4,20 +4,44 @@
     import { preference, setSidebarContent } from '$lib/stores';
     import { writable } from 'svelte/store';
     import type { PageData } from './$types';
-    import type { TagType } from '$lib/client';
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
+    import { ApiError, type TagType } from '$lib/client';
+    import { type ToastSettings, getToastStore } from '@skeletonlabs/skeleton';
 
     export let data: PageData;
 
     const store = writable<boolean>(false);
+
+    async function deletePost() {
+        try {
+            await client.post.postDeletePost(data.post.id);
+        } catch (err: unknown) {
+            if (err instanceof ApiError) {
+                if (err.status === 403) {
+                    const t: ToastSettings = {
+                        message: "You can't delete this post",
+                        background: 'variant-filled-error'
+                    };
+                    getToastStore().trigger(t);
+                } else if (err.status === 401) {
+                    const t: ToastSettings = {
+                        message: "You aren't logged in",
+                        background: 'variant-filled-error'
+                    };
+                    getToastStore().trigger(t);
+                }
+            }
+        }
+    }
 
     setSidebarContent({
         component: PostTags,
         data: {
             editMode: store,
             tags: data.post.tags,
-            source: data.post.source
+            source: data.post.source,
+            deletePostFunc: deletePost
         }
     });
 
@@ -58,7 +82,9 @@
             await client.post.postEditPost(data.post.id, {
                 tags: editValue
             });
-            await goto($page.url);
+            const url = $page.url;
+            await goto('/');
+            await goto(url);
         } catch (err: unknown) {
             /* empty */
         }

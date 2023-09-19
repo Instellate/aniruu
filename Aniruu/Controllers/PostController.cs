@@ -110,7 +110,7 @@ public class PostController : ControllerBase
                 }
             }
 
-        endLoopEarly:
+            endLoopEarly:
             int colonAmount = 0;
             foreach (char c in arraySegment)
             {
@@ -294,7 +294,7 @@ public class PostController : ControllerBase
     [Produces("application/json")]
     [ProducesResponseType<Error>(404)]
     [ProducesResponseType<PostResponse>(200)]
-    public IActionResult GetImageData(long id)
+    public IActionResult GetPost(long id)
     {
         Post? post = this._db.Posts
             .Include(p => p.Tags)
@@ -462,7 +462,7 @@ public class PostController : ControllerBase
     }
 
     [Authorization]
-    [HttpPatch("post/{id}")]
+    [HttpPatch("{id}")]
     [Produces("application/json")]
     public IActionResult EditPost(long id, EditPostBody body)
     {
@@ -641,6 +641,66 @@ public class PostController : ControllerBase
         }
 
         this._db.SaveChanges();
+        return NoContent();
+    }
+
+    [Authorization]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeletePostAsync(long id)
+    {
+        Post? post = this._db.Posts
+            .Include(t => t.Tags)
+            .FirstOrDefault(t => t.Id == id);
+
+        User? user = (User?)HttpContext.Items["User"];
+        if (user is null)
+        {
+            return StatusCode(401, new Error(401, ErrorCode.Unauthorized));
+        }
+
+        if (post is null)
+        {
+            return NotFound(new Error(404, ErrorCode.PostNotFound));
+        }
+
+        if (post.UserId != user.Id)
+        {
+            if ((user.Permission & UserPermission.DeletePost) == 0)
+            {
+                return StatusCode(403, new Error(403, ErrorCode.Forbidden));
+            }
+        }
+
+        List<Task> deleteTasks = new(ImageProcessing.Sizes.Length + 1);
+        foreach (int size in ImageProcessing.Sizes)
+        {
+            string filename = $"{post.Checksum}-{size}.webp";
+
+            RemoveObjectArgs args = new RemoveObjectArgs()
+                .WithBucket("aniruu")
+                .WithObject(filename);
+            deleteTasks.Add(this._minio.RemoveObjectAsync(args));
+        }
+
+        string orgFilename = $"{post.Checksum}{post.DefaultExtension}";
+        RemoveObjectArgs delArgs = new RemoveObjectArgs()
+            .WithBucket("aniruu")
+            .WithObject(orgFilename);
+        deleteTasks.Add(this._minio.RemoveObjectAsync(delArgs));
+
+        try
+        {
+            await Task.WhenAll(deleteTasks);
+        }
+        catch (MinioException)
+        {
+            return StatusCode(500, new Error(500, ErrorCode.InternalError)); 
+        }
+
+        this._db.PostTags.RemoveRange(post.Tags);
+        this._db.Posts.Remove(post);
+        this._db.SaveChanges();
+
         return NoContent();
     }
 }

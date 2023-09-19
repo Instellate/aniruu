@@ -90,6 +90,38 @@ export class PostService {
 
     /**
      * @param id
+     * @param body
+     * @returns binary
+     * @throws ApiError
+     */
+    public postEditPost(id: number, body: EditPostBody): CancelablePromise<Blob> {
+        return this.httpRequest.request({
+            method: 'PATCH',
+            url: '/api/Post/{id}',
+            path: {
+                id: id
+            },
+            body: body
+        });
+    }
+
+    /**
+     * @param id
+     * @returns binary
+     * @throws ApiError
+     */
+    public postDeletePost(id: number): CancelablePromise<Blob> {
+        return this.httpRequest.request({
+            method: 'DELETE',
+            url: '/api/Post/{id}',
+            path: {
+                id: id
+            }
+        });
+    }
+
+    /**
+     * @param id
      * @returns PostResponse
      * @throws ApiError
      */
@@ -115,23 +147,6 @@ export class PostService {
             query: {
                 tag: tag
             }
-        });
-    }
-
-    /**
-     * @param id
-     * @param body
-     * @returns binary
-     * @throws ApiError
-     */
-    public postEditPost(id: number, body: EditPostBody): CancelablePromise<Blob> {
-        return this.httpRequest.request({
-            method: 'PATCH',
-            url: '/api/Post/post/{id}',
-            path: {
-                id: id
-            },
-            body: body
         });
     }
 }

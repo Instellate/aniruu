@@ -5,7 +5,9 @@
         AppBar,
         storePopup,
         type PopupSettings,
-        popup
+        popup,
+        initializeStores,
+        Toast
     } from '@skeletonlabs/skeleton';
     import {
         computePosition,
@@ -20,6 +22,8 @@
     import { goto } from '$app/navigation';
     import { browser } from '$app/environment';
     import { client } from '$lib';
+
+    initializeStores();
 
     async function signOut(): Promise<void> {
         if (browser) {
@@ -55,6 +59,8 @@
 <svelte:head>
     <title>Upload a post</title>
 </svelte:head>
+
+<Toast />
 
 <AppShell slotSidebarLeft="bg-surface-900 w-80 {$hideSidebarStore ? 'hidden' : ''}">
     <svelte:fragment slot="header">
