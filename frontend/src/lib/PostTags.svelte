@@ -5,6 +5,7 @@
     export let tags: PostTagsResponse[];
     export let editMode: Writable<boolean>;
     export let source: string | undefined;
+    export let location: string;
     export let deletePostFunc: () => Promise<void>;
 
     tags.sort((a, b) => a.name.localeCompare(b.name));
@@ -80,7 +81,7 @@
         <a href={source} class="font-bold mt-4 my-2 text-blue-400">Source</a>
     {/if}
 
-    <a href={source} class="font-bold my-2 text-blue-400">Download</a>
+    <a href={location} class="font-bold my-2 text-blue-400">Download</a>
 
     <strong class="my-2">Actions:</strong>
     <div class="ml-2 text-blue-400">

@@ -46,8 +46,8 @@ builder.Services.AddSingleton<IMinioClient, MinioClient>(_ =>
     new MinioClient()
         .WithEndpoint("localhost", 9000)
         .WithCredentials(
-            "vjRksaqWHzMIvrDWhTOE",
-            "vO7Pfdzo5HoGGcJlMCNH9n5tkKBIyevZkGwo8Ee8"
+            builder.Configuration["MINIO_ACCESS_KEY"],
+            builder.Configuration["MINIO_SECRET_KEY"]
         )
         .Build());
 

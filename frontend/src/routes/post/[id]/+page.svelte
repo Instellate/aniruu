@@ -41,6 +41,7 @@
             editMode: store,
             tags: data.post.tags,
             source: data.post.source,
+            location: `${client.request.config.BASE}${data.post.location}`,
             deletePostFunc: deletePost
         }
     });
@@ -76,17 +77,20 @@
             .join(' ');
     }
 
-    let editValue: string = tagsToString();
+    let editValue = tagsToString();
+    let sourceStr = '';
+
     async function updatePost() {
         try {
             await client.post.postEditPost(data.post.id, {
-                tags: editValue
+                tags: editValue,
+                source: sourceStr === '' ? undefined : sourceStr
             });
             const url = $page.url;
             await goto('/');
             await goto(url);
         } catch (err: unknown) {
-            /* empty */
+            console.error(err);
         }
     }
 
@@ -106,7 +110,7 @@
 </svelte:head>
 
 <div class="px-5 py-5 flex flex-col">
-    <button on:click={changeImgSize}>
+    <button on:click={changeImgSize} class="w-fit">
         <img src={imgUrl} alt="Post" class="bg-white" />
     </button>
 
@@ -118,6 +122,12 @@
                 cols="50"
                 class="textarea w-fit"
                 bind:value={editValue}
+            />
+            <input
+                type="text"
+                class="input variant-form-material w-fit"
+                placeholder="Source"
+                bind:value={sourceStr}
             />
             <button class="btn variant-ghost-surface w-fit" on:click={updatePost}
                 >Submit</button
