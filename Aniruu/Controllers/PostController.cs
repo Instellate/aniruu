@@ -1,17 +1,20 @@
 using Aniruu.Database;
 using Aniruu.Database.Entities;
+using Aniruu.Migrations;
 using Aniruu.Request;
 using Aniruu.Response;
 using Aniruu.Response.Post;
 using Aniruu.Utility;
 using Media;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using Minio;
 using Minio.DataModel;
 using Minio.Exceptions;
 using NetVips;
+using TagType = Aniruu.Database.Entities.TagType;
 
 namespace Aniruu.Controllers;
 
@@ -257,7 +260,7 @@ public class PostController : ControllerBase
         CancellationToken ct = default
     )
     {
-        Post? post = await this._db.Posts.FindAsync(id);
+        Post? post = await this._db.Posts.FindAsync(id, ct);
         if (post is null)
         {
             return NotFound(new Error(404, ErrorCode.PostNotFound));
@@ -646,11 +649,14 @@ public class PostController : ControllerBase
 
     [Authorization]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeletePostAsync(long id)
+    public async Task<IActionResult> DeletePostAsync(
+        long id,
+        CancellationToken ct = default
+    )
     {
-        Post? post = this._db.Posts
+        Post? post = await this._db.Posts
             .Include(t => t.Tags)
-            .FirstOrDefault(t => t.Id == id);
+            .FirstOrDefaultAsync(t => t.Id == id, ct);
 
         User? user = (User?)HttpContext.Items["User"];
         if (user is null)
@@ -679,14 +685,14 @@ public class PostController : ControllerBase
             RemoveObjectArgs args = new RemoveObjectArgs()
                 .WithBucket("aniruu")
                 .WithObject(filename);
-            deleteTasks.Add(this._minio.RemoveObjectAsync(args));
+            deleteTasks.Add(this._minio.RemoveObjectAsync(args, ct));
         }
 
         string orgFilename = $"{post.Checksum}{post.DefaultExtension}";
         RemoveObjectArgs delArgs = new RemoveObjectArgs()
             .WithBucket("aniruu")
             .WithObject(orgFilename);
-        deleteTasks.Add(this._minio.RemoveObjectAsync(delArgs));
+        deleteTasks.Add(this._minio.RemoveObjectAsync(delArgs, ct));
 
         try
         {
@@ -694,13 +700,80 @@ public class PostController : ControllerBase
         }
         catch (MinioException)
         {
-            return StatusCode(500, new Error(500, ErrorCode.InternalError)); 
+            return StatusCode(500, new Error(500, ErrorCode.InternalError));
         }
 
         this._db.PostTags.RemoveRange(post.Tags);
         this._db.Posts.Remove(post);
-        this._db.SaveChanges();
+        await this._db.SaveChangesAsync(ct);
 
         return NoContent();
+    }
+
+    [HttpPost("{id}/comments")]
+    [Authorization(UserPermission.CreateComment)]
+    public IActionResult CreateComment(long id, CreateCommentBody body)
+    {
+        if (string.IsNullOrWhiteSpace(body.Content))
+        {
+            return BadRequest();
+        }
+        
+        Post? post = this._db.Posts.Find(id);
+        if (post is null)
+        {
+            return NotFound(new Error(404, ErrorCode.PostNotFound));
+        }
+
+        User user = (User)HttpContext.Items["User"]!;
+
+        Comment comment = new()
+        {
+            Content = body.Content,
+            PostId = post.Id,
+            UserId = user.Id
+        };
+
+        this._db.Comments.Add(comment);
+        this._db.SaveChanges();
+
+        return Created($"{id}/comments", null);
+    }
+
+    [HttpGet("{id}/comments")]
+    [Produces("application/json")]
+    [ProducesResponseType<Error>(404)]
+    [ProducesResponseType<IEnumerable<PostComment>>(200)]
+    public IActionResult GetComments(long id, [FromQuery] int page = 1)
+    {
+        if (page >= 0)
+        {
+            page = 1;
+        }
+
+        Post? post = this._db.Posts
+            .Include(p =>
+                p.Comments.Skip((page - 1) * 10).Take(10)
+            )
+            .ThenInclude(c => c.User)
+            .FirstOrDefault(p => p.Id == id);
+
+        if (post is null)
+        {
+            return NotFound(new Error(404, ErrorCode.PostNotFound));
+        }
+
+        List<PostComment> comments = new(post.Comments.Count);
+        foreach (Comment comment in post.Comments)
+        {
+            comments.Add(new PostComment
+            {
+                Content = comment.Content,
+                Author = new PostAuthorResponse(comment.User.Id, comment.User.Username),
+                CreatedAt = ((DateTimeOffset)comment.CreatedAt).ToUnixTimeMilliseconds()
+            });
+        }
+
+        return Ok(comments.OrderByDescending(c => c.CreatedAt));
     }
 }

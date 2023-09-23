@@ -12,10 +12,12 @@ export const load = (async ({ params }) => {
     }
 
     try {
-        const post = await client.post.postGetImageData(num);
+        const post = await client.post.postGetPost(num);
+        const comments = await client.post.postGetComments(num);
 
         return {
-            post: post
+            post: post,
+            comments: comments
         };
     } catch (e: unknown) {
         if (e instanceof ApiError) {

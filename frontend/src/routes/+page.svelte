@@ -1,11 +1,13 @@
-<!-- YOU CAN DELETE EVERYTHING IN THIS PAGE -->
-
 <script lang="ts">
     import { client } from '$lib';
     import type { PageData } from './$types';
 
     export let data: PageData;
 </script>
+
+<svelte:head>
+    <title>Posts</title>
+</svelte:head>
 
 <div class="flex flex-wrap gap-5 px-5 py-5">
     {#each data.posts as post}

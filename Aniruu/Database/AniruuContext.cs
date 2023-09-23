@@ -17,4 +17,5 @@ public class AniruuContext : DbContext
     public DbSet<Tag> Tags { get; init; } = null!;
 
     public DbSet<PostTags> PostTags { get; init; } = null!;
+    public DbSet<Comment> Comments { get; init; } = null!;
 }

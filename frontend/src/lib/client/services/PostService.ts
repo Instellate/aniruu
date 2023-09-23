@@ -2,7 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { CreateCommentBody } from '../models/CreateCommentBody';
 import type { EditPostBody } from '../models/EditPostBody';
+import type { PostComment } from '../models/PostComment';
 import type { PostCreated } from '../models/PostCreated';
 import type { PostResponse } from '../models/PostResponse';
 
@@ -125,7 +127,7 @@ export class PostService {
      * @returns PostResponse
      * @throws ApiError
      */
-    public postGetImageData(id: number): CancelablePromise<PostResponse> {
+    public postGetPost(id: number): CancelablePromise<PostResponse> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/api/Post/{id}/data',
@@ -146,6 +148,48 @@ export class PostService {
             url: '/api/Post/post/tags',
             query: {
                 tag: tag
+            }
+        });
+    }
+
+    /**
+     * @param id
+     * @param body
+     * @returns binary
+     * @throws ApiError
+     */
+    public postCreateComment(
+        id: number,
+        body: CreateCommentBody
+    ): CancelablePromise<Blob> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/Post/{id}/comments',
+            path: {
+                id: id
+            },
+            body: body
+        });
+    }
+
+    /**
+     * @param id
+     * @param page
+     * @returns PostComment
+     * @throws ApiError
+     */
+    public postGetComments(
+        id: number,
+        page: number = 1
+    ): CancelablePromise<Array<PostComment>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/api/Post/{id}/comments',
+            path: {
+                id: id
+            },
+            query: {
+                page: page
             }
         });
     }

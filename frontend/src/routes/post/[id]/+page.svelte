@@ -8,6 +8,7 @@
     import { page } from '$app/stores';
     import { ApiError, type TagType } from '$lib/client';
     import { type ToastSettings, getToastStore } from '@skeletonlabs/skeleton';
+    import Error from './+error.svelte';
 
     export let data: PageData;
 
@@ -77,6 +78,17 @@
             .join(' ');
     }
 
+    function formatDateTime(dateTime: number): string {
+        const en = Intl.DateTimeFormat('en-gb', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        return en.format(dateTime);
+    }
+
     let editValue = tagsToString();
     let sourceStr = '';
 
@@ -102,6 +114,25 @@
         imgUrl = imgUrl.endsWith('720')
             ? `${client.request.config.BASE + data.post.location}`
             : `${client.request.config.BASE + data.post.location}?size=720`;
+    }
+
+    let value = '';
+    async function createComment() {
+        if (value) {
+            try {
+                await client.post.postCreateComment(data.post.id, {
+                    content: value
+                });
+            } catch (err: unknown) {
+                // Empty
+            }
+        } else {
+            getToastStore().trigger({
+                message: 'Comment cannot be empty',
+                background: 'variant-filled-error',
+                timeout: 5
+            });
+        }
     }
 </script>
 
@@ -134,4 +165,28 @@
             >
         </div>
     {/if}
+
+    <div class="flex flex-col gap-4 mt-2">
+        <strong class="text-lg">Comments:</strong>
+        {#each data.comments as comment}
+            <div
+                class="bg-surface-800 rounded-md space-y-2 flex flex-col gpa-0.5 p-2 w-fit"
+            >
+                <p>{comment.author.name}</p>
+                <p>{comment.content}</p>
+                <small>Created at {formatDateTime(comment.createdAt)}</small>
+            </div>
+        {/each}
+        <textarea
+            name="Create comment"
+            cols="40"
+            rows="5"
+            class="w-fit textarea"
+            placeholder="Comment content..."
+            bind:value
+        />
+        <button class="btn variant-filled w-fit" on:click={createComment}>
+            Submit comment
+        </button>
+    </div>
 </div>
