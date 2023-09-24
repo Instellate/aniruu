@@ -718,7 +718,7 @@ public class PostController : ControllerBase
         {
             return BadRequest();
         }
-        
+
         Post? post = this._db.Posts.Find(id);
         if (post is null)
         {
@@ -770,10 +770,39 @@ public class PostController : ControllerBase
             {
                 Content = comment.Content,
                 Author = new PostAuthorResponse(comment.User.Id, comment.User.Username),
-                CreatedAt = ((DateTimeOffset)comment.CreatedAt).ToUnixTimeMilliseconds()
+                CreatedAt = ((DateTimeOffset)comment.CreatedAt).ToUnixTimeMilliseconds(),
+                Id = comment.Id
             });
         }
 
-        return Ok(comments.OrderByDescending(c => c.CreatedAt));
+        return Ok(comments.OrderBy(c => c.CreatedAt));
+    }
+
+    [Authorization]
+    [HttpDelete("{postId}/comments/{commentId}")]
+    [Produces("application/json")]
+    public IActionResult DeleteComment(long postId, Guid commentId)
+    {
+        Comment? comment = this._db.Comments.Find(commentId);
+        if (comment is null)
+        {
+            return NotFound();
+        }
+
+        if (comment.PostId != postId)
+        {
+            return NotFound();
+        }
+
+        User user = (User)HttpContext.Items["User"]!;
+        if (comment.UserId != user.Id)
+        {
+            if ((user.Permission & UserPermission.DeleteComment) == 0)
+            {
+                return StatusCode(403, new Error(403, ErrorCode.Forbidden));
+            }
+        }
+
+        return Ok();
     }
 }

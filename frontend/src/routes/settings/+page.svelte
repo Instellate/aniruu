@@ -12,3 +12,7 @@
         component: Test
     });
 </script>
+
+<svelte:head>
+    <title>Settings</title>
+</svelte:head>

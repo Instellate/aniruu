@@ -193,4 +193,21 @@ export class PostService {
             }
         });
     }
+
+    /**
+     * @param postId
+     * @param commentId
+     * @returns binary
+     * @throws ApiError
+     */
+    public postDeleteComment(postId: number, commentId: string): CancelablePromise<Blob> {
+        return this.httpRequest.request({
+            method: 'DELETE',
+            url: '/api/Post/{postId}/comments/{commentId}',
+            path: {
+                postId: postId,
+                commentId: commentId
+            }
+        });
+    }
 }

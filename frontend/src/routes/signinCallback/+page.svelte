@@ -4,9 +4,6 @@
     import { client } from '$lib';
     import { ApiError, type ClaimUsername } from '$lib/client';
     import { hideSidebar, userStore } from '$lib/stores';
-    import type { PageData } from './$types';
-
-    export let data: PageData;
 
     let input = '';
     let errorMessage = '';

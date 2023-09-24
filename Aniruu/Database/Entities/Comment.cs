@@ -10,5 +10,5 @@ public class Comment
     public User User { get; init; } = null!;
     public required long PostId { get; set; }
     public Post Post { get; init; } = null!;
-    public DateTime CreatedAt { get; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

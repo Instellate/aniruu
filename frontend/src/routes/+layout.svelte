@@ -24,6 +24,7 @@
     import { client } from '$lib';
 
     initializeStores();
+    storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 
     async function signOut(): Promise<void> {
         if (browser) {
@@ -47,18 +48,12 @@
         }
     }
 
-    storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
-
     const accountPopupSetting: PopupSettings = {
         event: 'click',
         target: 'accountPopup',
         placement: 'bottom-end'
     };
 </script>
-
-<svelte:head>
-    <title>Upload a post</title>
-</svelte:head>
 
 <Toast />
 

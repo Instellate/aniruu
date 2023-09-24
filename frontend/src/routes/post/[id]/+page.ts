@@ -1,7 +1,7 @@
 import { client } from '$lib';
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
-import { ApiError, type PostResponse } from '$lib/client';
+import { ApiError } from '$lib/client';
 
 export const load = (async ({ params }) => {
     const num = Number(params.id);
