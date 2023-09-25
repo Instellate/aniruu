@@ -7,7 +7,8 @@
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
     import { ApiError, type TagType } from '$lib/client';
-    import { getToastStore, popup } from '@skeletonlabs/skeleton';
+    import { getToastStore } from '@skeletonlabs/skeleton';
+    import Comment from './Comment.svelte';
 
     export let data: PageData;
 
@@ -75,17 +76,6 @@
             .join(' ');
     }
 
-    function formatDateTime(dateTime: number): string {
-        const en = Intl.DateTimeFormat('en-gb', {
-            month: '2-digit',
-            day: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        return en.format(dateTime);
-    }
-
     let editValue = tagsToString();
     let sourceStr = '';
 
@@ -130,21 +120,6 @@
             });
         }
     }
-
-    async function deleteComment(commentId: string) {
-        try {
-            await client.post.postDeleteComment(data.post.id, commentId);
-        } catch (err: unknown) {
-            if (err instanceof ApiError) {
-                if (err.status === 403) {
-                    getToastStore().trigger({
-                        message: 'You cannot delete this comment',
-                        background: 'variant-filled-error'
-                    });
-                }
-            }
-        }
-    }
 </script>
 
 <svelte:head>
@@ -181,49 +156,7 @@
         <strong class="text-lg">Comments:</strong>
         <div class="w-[35rem] flex flex-col gap-4">
             {#each data.comments as comment}
-                <div
-                    class="bg-surface-800 rounded-md space-y-2 flex flex-col gpa-0.5 p-2"
-                >
-                    <div class="flex flex-row justify-between">
-                        <strong class="text-lg">{comment.author.name}</strong>
-                        <button
-                            use:popup={{
-                                event: 'click',
-                                placement: 'bottom',
-                                target: `deleteCommentPopup-${comment.id}`
-                            }}
-                        >
-                            <!-- This svg was porivded by https://heroicons.com/ -->
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke-width="1.5"
-                                stroke="currentColor"
-                                class="w-6 h-6"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
-                                />
-                            </svg>
-                        </button>
-                        <div
-                            data-popup="deleteCommentPopup-{comment.id}"
-                            class="card flex flex-row gap-0.5"
-                        >
-                            <button
-                                on:click={() => deleteComment(comment.id)}
-                                class="hover:bg-slate-600 duration-150 p-2 rounded-md"
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                    <p>{comment.content}</p>
-                    <small>Created at {formatDateTime(comment.createdAt)}</small>
-                </div>
+                <Comment postId={data.post.id} {comment} />
             {/each}
         </div>
         <textarea

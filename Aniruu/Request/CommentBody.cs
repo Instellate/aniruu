@@ -1,6 +1,6 @@
 namespace Aniruu.Request;
 
-public class CreateCommentBody
+public class CommentBody
 {
     public required string Content { get; init; }
 }

@@ -12,8 +12,8 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 
 export type { AuthUri } from './models/AuthUri';
 export type { ClaimUsername } from './models/ClaimUsername';
+export type { CommentBody } from './models/CommentBody';
 export type { CreateBody } from './models/CreateBody';
-export type { CreateCommentBody } from './models/CreateCommentBody';
 export type { EditPostBody } from './models/EditPostBody';
 export type { Error } from './models/Error';
 export { ErrorCode } from './models/ErrorCode';

@@ -1,13 +1,11 @@
 using Aniruu.Database;
 using Aniruu.Database.Entities;
-using Aniruu.Migrations;
 using Aniruu.Request;
 using Aniruu.Response;
 using Aniruu.Response.Post;
 using Aniruu.Utility;
 using Media;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using Minio;
@@ -455,11 +453,12 @@ public class PostController : ControllerBase
         [FromQuery] string tag
     )
     {
-        string formattedTag = $"%{tag}%";
         IEnumerable<string> tags = this._db.Tags
-            .Where(t => EF.Functions.Like(t.Name, formattedTag))
-            .Select(t => t.Name);
-        // TODO: Optimise above query
+            .Where(t => t.Name.StartsWith(tag.ToLower())
+                        || t.Name.EndsWith(tag.ToLower()))
+            .Select(t => t.Name)
+            .AsEnumerable();
+        // TODO: Still do some optimisation
 
         return Ok(tags);
     }
@@ -712,7 +711,7 @@ public class PostController : ControllerBase
 
     [HttpPost("{id}/comments")]
     [Authorization(UserPermission.CreateComment)]
-    public IActionResult CreateComment(long id, CreateCommentBody body)
+    public IActionResult CreateComment(long id, CommentBody body)
     {
         if (string.IsNullOrWhiteSpace(body.Content))
         {
@@ -781,6 +780,8 @@ public class PostController : ControllerBase
     [Authorization]
     [HttpDelete("{postId}/comments/{commentId}")]
     [Produces("application/json")]
+    [ProducesResponseType<Error>(403)]
+    [ProducesResponseType(200)]
     public IActionResult DeleteComment(long postId, Guid commentId)
     {
         Comment? comment = this._db.Comments.Find(commentId);
@@ -802,6 +803,43 @@ public class PostController : ControllerBase
                 return StatusCode(403, new Error(403, ErrorCode.Forbidden));
             }
         }
+
+        this._db.Comments.Remove(comment);
+        this._db.SaveChanges();
+
+        return Ok();
+    }
+    
+    [Authorization]
+    [HttpPut("{postId}/comments/{commentId}")]
+    [Produces("application/json")]
+    [ProducesResponseType<Error>(403)]
+    [ProducesResponseType(200)]
+    public IActionResult EditComment(
+        long postId,
+        Guid commentId,
+        [FromBody] CommentBody body
+    )
+    {
+        Comment? comment = this._db.Comments.Find(commentId);
+        if (comment is null)
+        {
+            return NotFound();
+        }
+
+        if (comment.PostId != postId)
+        {
+            return NotFound();
+        }
+
+        User user = (User)HttpContext.Items["User"]!;
+        if (comment.UserId != user.Id)
+        {
+            return StatusCode(403, new Error(403, ErrorCode.Forbidden));
+        }
+
+        comment.Content = body.Content;
+        this._db.SaveChanges();
 
         return Ok();
     }

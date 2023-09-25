@@ -59,7 +59,8 @@ public class OAuth2
     public Task<OAuth2Info> GetInfoAsync(
         string code,
         string service,
-        CancellationToken ct = default)
+        CancellationToken ct = default
+    )
     {
         switch (service)
         {

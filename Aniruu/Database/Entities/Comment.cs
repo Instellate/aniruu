@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Aniruu.Database.Entities;
 
 public class Comment
