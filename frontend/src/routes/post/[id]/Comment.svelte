@@ -86,7 +86,7 @@
             <!-- TODO: Make these buttons only appear for appropriate users -->
             <div class="flex flex-col gap-0.5">
                 <button
-                    on:click={() => editMode = true}
+                    on:click={() => (editMode = true)}
                     class="hover:bg-slate-600 duration-150 p-2 rounded-md"
                 >
                     Edit
@@ -103,8 +103,10 @@
     {#if editMode}
         <textarea class="textarea" bind:value={newContent} />
         <div class="flex flex-row gap-2">
-            <button class="btn btn-sm variant-filled" on:click={editComment}>Submit</button>
-            <button class="btn btn-sm variant-filled" on:click={() => editMode = false}>
+            <button class="btn btn-sm variant-filled" on:click={editComment}
+                >Submit</button
+            >
+            <button class="btn btn-sm variant-filled" on:click={() => (editMode = false)}>
                 Cancel
             </button>
         </div>
