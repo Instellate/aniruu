@@ -19,6 +19,7 @@ public class OAuth2
     public string GoogleAuthUrl { get; }
     public string DiscordAuthUrl { get; }
 
+    // TODO: Find a better way to build url queries
     public OAuth2(IConfiguration config)
     {
         IConfigurationSection oAuth2Config = config.GetSection("OAuth2");

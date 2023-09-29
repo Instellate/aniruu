@@ -10,6 +10,8 @@
     import { getToastStore } from '@skeletonlabs/skeleton';
     import Comment from './Comment.svelte';
 
+    const toastStore = getToastStore();
+
     export let data: PageData;
 
     const store = writable<boolean>(false);
@@ -20,12 +22,12 @@
         } catch (err: unknown) {
             if (err instanceof ApiError) {
                 if (err.status === 403) {
-                    getToastStore().trigger({
+                    toastStore.trigger({
                         message: "You aren't logged in",
                         background: 'variant-filled-error'
                     });
                 } else if (err.status === 401) {
-                    getToastStore().trigger({
+                    toastStore.trigger({
                         message: "You aren't logged in",
                         background: 'variant-filled-error'
                     });
@@ -114,7 +116,7 @@
                 // Empty
             }
         } else {
-            getToastStore().trigger({
+            toastStore.trigger({
                 message: 'Comment cannot be empty',
                 background: 'variant-filled-error'
             });
