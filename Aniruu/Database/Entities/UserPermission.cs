@@ -10,4 +10,6 @@ public enum UserPermission
     BanUser = 1 << 3,
     RemoveUser = 1 << 4,
     ChangeImportance = 1 << 5,
+    CreateComment = 1 << 6,
+    DeleteComment = 1 << 7,
 }

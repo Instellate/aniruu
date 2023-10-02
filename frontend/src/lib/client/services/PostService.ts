@@ -2,7 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { CommentBody } from '../models/CommentBody';
 import type { EditPostBody } from '../models/EditPostBody';
+import type { PostComment } from '../models/PostComment';
 import type { PostCreated } from '../models/PostCreated';
 import type { PostResponse } from '../models/PostResponse';
 
@@ -125,7 +127,7 @@ export class PostService {
      * @returns PostResponse
      * @throws ApiError
      */
-    public postGetImageData(id: number): CancelablePromise<PostResponse> {
+    public postGetPost(id: number): CancelablePromise<PostResponse> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/api/Post/{id}/data',
@@ -147,6 +149,85 @@ export class PostService {
             query: {
                 tag: tag
             }
+        });
+    }
+
+    /**
+     * @param id
+     * @param body
+     * @returns binary
+     * @throws ApiError
+     */
+    public postCreateComment(id: number, body: CommentBody): CancelablePromise<Blob> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/Post/{id}/comments',
+            path: {
+                id: id
+            },
+            body: body
+        });
+    }
+
+    /**
+     * @param id
+     * @param page
+     * @returns PostComment
+     * @throws ApiError
+     */
+    public postGetComments(
+        id: number,
+        page: number = 1
+    ): CancelablePromise<Array<PostComment>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/api/Post/{id}/comments',
+            path: {
+                id: id
+            },
+            query: {
+                page: page
+            }
+        });
+    }
+
+    /**
+     * @param postId
+     * @param commentId
+     * @returns any
+     * @throws ApiError
+     */
+    public postDeleteComment(postId: number, commentId: string): CancelablePromise<any> {
+        return this.httpRequest.request({
+            method: 'DELETE',
+            url: '/api/Post/{postId}/comments/{commentId}',
+            path: {
+                postId: postId,
+                commentId: commentId
+            }
+        });
+    }
+
+    /**
+     * @param postId
+     * @param commentId
+     * @param body
+     * @returns any
+     * @throws ApiError
+     */
+    public postEditComment(
+        postId: number,
+        commentId: string,
+        body: CommentBody
+    ): CancelablePromise<any> {
+        return this.httpRequest.request({
+            method: 'PUT',
+            url: '/api/Post/{postId}/comments/{commentId}',
+            path: {
+                postId: postId,
+                commentId: commentId
+            },
+            body: body
         });
     }
 }

@@ -12,6 +12,7 @@ using Minio;
 using Minio.DataModel;
 using Minio.Exceptions;
 using NetVips;
+using TagType = Aniruu.Database.Entities.TagType;
 
 namespace Aniruu.Controllers;
 
@@ -257,7 +258,7 @@ public class PostController : ControllerBase
         CancellationToken ct = default
     )
     {
-        Post? post = await this._db.Posts.FindAsync(id);
+        Post? post = await this._db.Posts.FindAsync(id, ct);
         if (post is null)
         {
             return NotFound(new Error(404, ErrorCode.PostNotFound));
@@ -452,11 +453,12 @@ public class PostController : ControllerBase
         [FromQuery] string tag
     )
     {
-        string formattedTag = $"%{tag}%";
         IEnumerable<string> tags = this._db.Tags
-            .Where(t => EF.Functions.Like(t.Name, formattedTag))
-            .Select(t => t.Name);
-        // TODO: Optimise above query
+            .Where(t => t.Name.StartsWith(tag.ToLower())
+                        || t.Name.EndsWith(tag.ToLower()))
+            .Select(t => t.Name)
+            .AsEnumerable();
+        // TODO: Still do some optimisation
 
         return Ok(tags);
     }
@@ -646,11 +648,14 @@ public class PostController : ControllerBase
 
     [Authorization]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeletePostAsync(long id)
+    public async Task<IActionResult> DeletePostAsync(
+        long id,
+        CancellationToken ct = default
+    )
     {
-        Post? post = this._db.Posts
+        Post? post = await this._db.Posts
             .Include(t => t.Tags)
-            .FirstOrDefault(t => t.Id == id);
+            .FirstOrDefaultAsync(t => t.Id == id, ct);
 
         User? user = (User?)HttpContext.Items["User"];
         if (user is null)
@@ -679,14 +684,14 @@ public class PostController : ControllerBase
             RemoveObjectArgs args = new RemoveObjectArgs()
                 .WithBucket("aniruu")
                 .WithObject(filename);
-            deleteTasks.Add(this._minio.RemoveObjectAsync(args));
+            deleteTasks.Add(this._minio.RemoveObjectAsync(args, ct));
         }
 
         string orgFilename = $"{post.Checksum}{post.DefaultExtension}";
         RemoveObjectArgs delArgs = new RemoveObjectArgs()
             .WithBucket("aniruu")
             .WithObject(orgFilename);
-        deleteTasks.Add(this._minio.RemoveObjectAsync(delArgs));
+        deleteTasks.Add(this._minio.RemoveObjectAsync(delArgs, ct));
 
         try
         {
@@ -694,13 +699,148 @@ public class PostController : ControllerBase
         }
         catch (MinioException)
         {
-            return StatusCode(500, new Error(500, ErrorCode.InternalError)); 
+            return StatusCode(500, new Error(500, ErrorCode.InternalError));
         }
 
         this._db.PostTags.RemoveRange(post.Tags);
         this._db.Posts.Remove(post);
-        this._db.SaveChanges();
+        await this._db.SaveChangesAsync(ct);
 
         return NoContent();
+    }
+
+    [HttpPost("{id}/comments")]
+    [Authorization(UserPermission.CreateComment)]
+    public IActionResult CreateComment(long id, CommentBody body)
+    {
+        if (string.IsNullOrWhiteSpace(body.Content))
+        {
+            return BadRequest();
+        }
+
+        Post? post = this._db.Posts.Find(id);
+        if (post is null)
+        {
+            return NotFound(new Error(404, ErrorCode.PostNotFound));
+        }
+
+        User user = (User)HttpContext.Items["User"]!;
+
+        Comment comment = new()
+        {
+            Content = body.Content,
+            PostId = post.Id,
+            UserId = user.Id
+        };
+
+        this._db.Comments.Add(comment);
+        this._db.SaveChanges();
+
+        return Created($"{id}/comments", null);
+    }
+
+    [HttpGet("{id}/comments")]
+    [Produces("application/json")]
+    [ProducesResponseType<Error>(404)]
+    [ProducesResponseType<IEnumerable<PostComment>>(200)]
+    public IActionResult GetComments(long id, [FromQuery] int page = 1)
+    {
+        if (page >= 0)
+        {
+            page = 1;
+        }
+
+        Post? post = this._db.Posts
+            .Include(p =>
+                p.Comments.Skip((page - 1) * 10).Take(10)
+            )
+            .ThenInclude(c => c.User)
+            .FirstOrDefault(p => p.Id == id);
+
+        if (post is null)
+        {
+            return NotFound(new Error(404, ErrorCode.PostNotFound));
+        }
+
+        List<PostComment> comments = new(post.Comments.Count);
+        foreach (Comment comment in post.Comments)
+        {
+            comments.Add(new PostComment
+            {
+                Content = comment.Content,
+                Author = new PostAuthorResponse(comment.User.Id, comment.User.Username),
+                CreatedAt = ((DateTimeOffset)comment.CreatedAt).ToUnixTimeMilliseconds(),
+                Id = comment.Id
+            });
+        }
+
+        return Ok(comments.OrderBy(c => c.CreatedAt));
+    }
+
+    [Authorization]
+    [HttpDelete("{postId}/comments/{commentId}")]
+    [Produces("application/json")]
+    [ProducesResponseType<Error>(403)]
+    [ProducesResponseType(200)]
+    public IActionResult DeleteComment(long postId, Guid commentId)
+    {
+        Comment? comment = this._db.Comments.Find(commentId);
+        if (comment is null)
+        {
+            return NotFound();
+        }
+
+        if (comment.PostId != postId)
+        {
+            return NotFound();
+        }
+
+        User user = (User)HttpContext.Items["User"]!;
+        if (comment.UserId != user.Id)
+        {
+            if ((user.Permission & UserPermission.DeleteComment) == 0)
+            {
+                return StatusCode(403, new Error(403, ErrorCode.Forbidden));
+            }
+        }
+
+        this._db.Comments.Remove(comment);
+        this._db.SaveChanges();
+
+        return Ok();
+    }
+    
+    [Authorization]
+    [HttpPut("{postId}/comments/{commentId}")]
+    [Produces("application/json")]
+    [ProducesResponseType<Error>(403)]
+    [ProducesResponseType(200)]
+    public IActionResult EditComment(
+        long postId,
+        Guid commentId,
+        [FromBody] CommentBody body
+    )
+    {
+        Comment? comment = this._db.Comments.Find(commentId);
+        if (comment is null)
+        {
+            return NotFound();
+        }
+
+        if (comment.PostId != postId)
+        {
+            return NotFound();
+        }
+
+        User user = (User)HttpContext.Items["User"]!;
+        if (comment.UserId != user.Id)
+        {
+            return StatusCode(403, new Error(403, ErrorCode.Forbidden));
+        }
+
+        comment.Content = body.Content;
+        this._db.SaveChanges();
+
+        return Ok();
     }
 }

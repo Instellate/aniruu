@@ -38,6 +38,10 @@
     hideSidebar();
 </script>
 
+<svelte:head>
+    <title>Upload a post</title>
+</svelte:head>
+
 {#if $userStore === null}
     <div class="flex items-center justify-center h-full">
         <strong class="text-xl"> You aren't logged in </strong>

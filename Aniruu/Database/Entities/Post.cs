@@ -16,4 +16,5 @@ public class Post
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 
     public List<PostTags> Tags { get; init; } = new();
+    public List<Comment> Comments { get; init; } = new();
 }
