@@ -26,22 +26,6 @@ export const preference = writable<Preference>({
 });
 export const userStore = writable<User | null>(null);
 
-if (browser) {
-    (async () => {
-        const token = window.localStorage.getItem('token');
-        if (token !== null) {
-            client.request.config.TOKEN = token;
-            const user = await client.user.userGetUserMe();
-
-            userStore.set({
-                sessionToken: token,
-                permission: user.permission ?? (0 as UserPermission),
-                id: user.id
-            });
-        }
-    })();
-}
-
 export function setSidebarContent(data: SidebarType) {
     onMount(() => {
         sidebarContent.set(data);

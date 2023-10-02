@@ -21,7 +21,8 @@
     import { hideSidebarStore, sidebarContent, userStore } from '$lib/stores';
     import { goto } from '$app/navigation';
     import { browser } from '$app/environment';
-    import { client } from '$lib';
+    import { client, hasFlag } from '$lib';
+    import { UserPermission } from '$lib/client';
 
     initializeStores();
     storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
@@ -64,7 +65,9 @@
                 <strong class="text-xl uppercase"><a href="/">Aniruu</a></strong>
             </svelte:fragment>
             <svelte:fragment slot="trail">
-                <a href="/upload" class="btn variant-filled">Upload</a>
+                {#if hasFlag($userStore?.permission ?? 0, UserPermission._1)}
+                    <a href="/upload" class="btn variant-filled">Upload</a>
+                {/if}
 
                 <button class="btn variant-ghost-surface" use:popup={accountPopupSetting}>
                     Account

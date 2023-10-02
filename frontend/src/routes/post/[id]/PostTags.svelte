@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { Writable } from 'svelte/store';
-    import type { PostTagsResponse } from '../../../lib/client';
-    import { userStore } from '../../../lib/stores';
+    import { hasFlag } from '$lib'
+    import type { PostTagsResponse } from '$lib/client';
+    import { userStore } from '$lib/stores';
     import { UserPermission } from '$lib/client/models/UserPermission';
 
     export let tags: PostTagsResponse[];
@@ -100,9 +101,9 @@
                     Delete
                 </button>
             </div>
-        {:else if $userStore.permission & (UserPermission._2 | UserPermission._4)}
+        {:else if hasFlag($userStore.permission, (UserPermission._2 | UserPermission._4))}
             <strong class="my-2">Actions:</strong>
-            {#if $userStore.permission & UserPermission._2}
+            {#if hasFlag($userStore.permission, UserPermission._2)}
                 <div class="ml-2 text-blue-400">
                     <button
                         on:click={() => editMode.set(true)}
@@ -112,7 +113,7 @@
                     </button>
                 </div>
             {/if}
-            {#if $userStore.permission}
+            {#if hasFlag($userStore.permission, UserPermission._4)}
                 <div class="ml-2 text-blue-400">
                     <button on:click={deletePostFunc} class="ml-2 mt-2 text-blue-400">
                         Delete
