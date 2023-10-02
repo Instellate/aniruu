@@ -71,26 +71,4 @@ export class AccountService {
             }
         });
     }
-
-    /**
-     * @returns binary
-     * @throws ApiError
-     */
-    public accountGetSettings(): CancelablePromise<Blob> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/Account/settings'
-        });
-    }
-
-    /**
-     * @returns binary
-     * @throws ApiError
-     */
-    public accountChangeSettings(): CancelablePromise<Blob> {
-        return this.httpRequest.request({
-            method: 'PATCH',
-            url: '/api/Account/settings'
-        });
-    }
 }

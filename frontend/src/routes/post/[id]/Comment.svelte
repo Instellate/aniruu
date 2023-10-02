@@ -74,12 +74,14 @@
             <div class="flex flex-col gap-0.5">
                 <button
                     on:click={() => (editMode = true)}
-                    class="hover:bg-slate-600 duration-150 p-2 rounded-t-md">
+                    class="hover:bg-slate-600 duration-150 p-2 rounded-t-md"
+                >
                     Edit
                 </button>
                 <button
                     on:click={deleteComment}
-                    class="hover:bg-slate-600 duration-150 p-2 rounded-b-md">
+                    class="hover:bg-slate-600 duration-150 p-2 rounded-b-md"
+                >
                     Delete
                 </button>
             </div>

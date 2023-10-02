@@ -27,6 +27,9 @@ export type { PostTagsResponse } from './models/PostTagsResponse';
 export type { ProblemDetails } from './models/ProblemDetails';
 export type { SessionCreated } from './models/SessionCreated';
 export { TagType } from './models/TagType';
+export { UserPermission } from './models/UserPermission';
+export type { UserProfile } from './models/UserProfile';
 
 export { AccountService } from './services/AccountService';
 export { PostService } from './services/PostService';
+export { UserService } from './services/UserService';

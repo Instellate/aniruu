@@ -1,11 +1,15 @@
 <script lang="ts">
     import type { Writable } from 'svelte/store';
-    import type { PostTagsResponse } from './client';
+    import type { PostTagsResponse } from '../../../lib/client';
+    import { userStore } from '../../../lib/stores';
+    import { UserPermission } from '$lib/client/models/UserPermission';
 
     export let tags: PostTagsResponse[];
     export let editMode: Writable<boolean>;
     export let source: string | undefined;
     export let location: string;
+    export let author: number;
+
     export let deletePostFunc: () => Promise<void>;
 
     tags.sort((a, b) => a.name.localeCompare(b.name));
@@ -83,13 +87,38 @@
 
     <a href={location} class="font-bold my-2 text-blue-400">Download</a>
 
-    <strong class="my-2">Actions:</strong>
-    <div class="ml-2 text-blue-400">
-        <button on:click={() => editMode.set(true)} class="ml-2 text-blue-400"
-            >Edit</button
-        >
-    </div>
-    <div class="ml-2 text-blue-400">
-        <button on:click={deletePostFunc} class="ml-2 mt-2 text-blue-400">Delete</button>
-    </div>
+    {#if $userStore}
+        {#if $userStore.id === author}
+            <strong class="my-2">Actions:</strong>
+            <div class="ml-2 text-blue-400">
+                <button on:click={() => editMode.set(true)} class="ml-2 text-blue-400">
+                    Edit
+                </button>
+            </div>
+            <div class="ml-2 text-blue-400">
+                <button on:click={deletePostFunc} class="ml-2 mt-2 text-blue-400">
+                    Delete
+                </button>
+            </div>
+        {:else if $userStore.permission & (UserPermission._2 | UserPermission._4)}
+            <strong class="my-2">Actions:</strong>
+            {#if $userStore.permission & UserPermission._2}
+                <div class="ml-2 text-blue-400">
+                    <button
+                        on:click={() => editMode.set(true)}
+                        class="ml-2 text-blue-400"
+                    >
+                        Edit
+                    </button>
+                </div>
+            {/if}
+            {#if $userStore.permission}
+                <div class="ml-2 text-blue-400">
+                    <button on:click={deletePostFunc} class="ml-2 mt-2 text-blue-400">
+                        Delete
+                    </button>
+                </div>
+            {/if}
+        {/if}
+    {/if}
 </div>

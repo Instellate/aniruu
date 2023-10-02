@@ -1,6 +1,6 @@
 <script lang="ts">
     import { client } from '$lib';
-    import PostTags from '$lib/PostTags.svelte';
+    import PostTags from './PostTags.svelte';
     import { preference, setSidebarContent } from '$lib/stores';
     import { writable } from 'svelte/store';
     import type { PageData } from './$types';
@@ -43,7 +43,8 @@
             tags: data.post.tags,
             source: data.post.source,
             location: `${client.request.config.BASE}${data.post.location}`,
-            deletePostFunc: deletePost
+            deletePostFunc: deletePost,
+            author: data.post.createdBy.id
         }
     });
 

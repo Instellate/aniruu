@@ -310,14 +310,4 @@ public class AccountController : ControllerBase
 
         return NoContent();
     }
-
-
-    [Authorization]
-    [HttpPatch("settings")]
-    public IActionResult ChangeSettings()
-    {
-        User user = (User)HttpContext.Items["User"]!;
-        
-        return Ok();
-    }
 }

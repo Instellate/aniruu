@@ -23,7 +23,7 @@
     let manipulatedInput = '';
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const onInputChange = debounce(async (_: string) => {
+    const onInputChange = debounce(async () => {
         if (input === '') return;
 
         let tag = input.split(' ').pop();
@@ -48,7 +48,6 @@
 
         if (htmlInput !== null) htmlInput.focus();
     }, 300);
-    $: onInputChange(input); // Doing this as AutoComplete does not have a `on:input`
 
     function onSelect(event: CustomEvent<AutocompleteOption>): void {
         let arr = input.split(' ');
@@ -74,11 +73,12 @@
     class="input autocomplete"
     type="search"
     name="autocomplete-search"
-    bind:value={input}
-    bind:this={htmlInput}
     placeholder="Search..."
     use:popup={popupSettings}
+    bind:value={input}
+    bind:this={htmlInput}
     on:keyup={onKeyup}
+    on:input={onInputChange}
 />
 <div
     data-popup="popupAutocomplete"

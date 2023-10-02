@@ -1,6 +1,8 @@
 import { browser } from '$app/environment';
 import { onMount, type ComponentType } from 'svelte';
 import { writable } from 'svelte/store';
+import type { UserPermission } from './client';
+import { client } from '$lib';
 
 export interface SidebarType {
     data: object;
@@ -9,6 +11,8 @@ export interface SidebarType {
 
 export interface User {
     sessionToken: string;
+    permission: UserPermission;
+    id: number;
 }
 
 export interface Preference {
@@ -23,12 +27,19 @@ export const preference = writable<Preference>({
 export const userStore = writable<User | null>(null);
 
 if (browser) {
-    const token = window.localStorage.getItem('token');
-    if (token !== null) {
-        userStore.set({
-            sessionToken: token
-        });
-    }
+    (async () => {
+        const token = window.localStorage.getItem('token');
+        if (token !== null) {
+            client.request.config.TOKEN = token;
+            const user = await client.user.userGetUserMe();
+
+            userStore.set({
+                sessionToken: token,
+                permission: user.permission ?? (0 as UserPermission),
+                id: user.id
+            });
+        }
+    })();
 }
 
 export function setSidebarContent(data: SidebarType) {
