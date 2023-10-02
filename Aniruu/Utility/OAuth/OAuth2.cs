@@ -19,6 +19,7 @@ public class OAuth2
     public string GoogleAuthUrl { get; }
     public string DiscordAuthUrl { get; }
 
+    // TODO: Find a better way to build url queries
     public OAuth2(IConfiguration config)
     {
         IConfigurationSection oAuth2Config = config.GetSection("OAuth2");
@@ -59,7 +60,8 @@ public class OAuth2
     public Task<OAuth2Info> GetInfoAsync(
         string code,
         string service,
-        CancellationToken ct = default)
+        CancellationToken ct = default
+    )
     {
         switch (service)
         {

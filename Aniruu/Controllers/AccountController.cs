@@ -2,6 +2,7 @@ using Aniruu.Database;
 using Aniruu.Database.Entities;
 using Aniruu.Request;
 using Aniruu.Response;
+using Aniruu.Utility;
 using Aniruu.Utility.OAuth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -286,6 +287,7 @@ public class AccountController : ControllerBase
     /// </summary>
     /// <param name="id">The id for the session</param>
     /// <returns></returns>
+    [Authorization]
     [HttpDelete("session/{id}")]
     [ProducesResponseType(204)]
     [ProducesResponseType<Error>(400)]
@@ -294,12 +296,28 @@ public class AccountController : ControllerBase
         Session? session = this._db.Sessions.Find(id);
         if (session is null)
         {
-            return BadRequest(new Error(400, ErrorCode.NoSessionFound));
+            return NotFound(new Error(404, ErrorCode.NoSessionFound));
+        }
+
+        User user = (User)HttpContext.Items["User"]!;
+        if (session.UserId != user.Id)
+        {
+            return StatusCode(403, new Error(403, ErrorCode.Forbidden));
         }
 
         this._db.Remove(session);
         this._db.SaveChanges();
 
         return NoContent();
+    }
+
+
+    [Authorization]
+    [HttpPatch("settings")]
+    public IActionResult ChangeSettings()
+    {
+        User user = (User)HttpContext.Items["User"]!;
+        
+        return Ok();
     }
 }

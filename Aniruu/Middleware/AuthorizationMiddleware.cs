@@ -21,6 +21,7 @@ public class AuthorizationMiddleware
         Endpoint? endpoint = ctx.GetEndpoint();
         AuthorizationAttribute? authAttr =
             endpoint?.Metadata.GetMetadata<AuthorizationAttribute>();
+
         if (authAttr is null)
         {
             return this._next(ctx);

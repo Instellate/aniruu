@@ -7,7 +7,10 @@
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
     import { ApiError, type TagType } from '$lib/client';
-    import { type ToastSettings, getToastStore } from '@skeletonlabs/skeleton';
+    import { getToastStore } from '@skeletonlabs/skeleton';
+    import Comment from './Comment.svelte';
+
+    const toastStore = getToastStore();
 
     export let data: PageData;
 
@@ -19,17 +22,15 @@
         } catch (err: unknown) {
             if (err instanceof ApiError) {
                 if (err.status === 403) {
-                    const t: ToastSettings = {
-                        message: "You can't delete this post",
-                        background: 'variant-filled-error'
-                    };
-                    getToastStore().trigger(t);
-                } else if (err.status === 401) {
-                    const t: ToastSettings = {
+                    toastStore.trigger({
                         message: "You aren't logged in",
                         background: 'variant-filled-error'
-                    };
-                    getToastStore().trigger(t);
+                    });
+                } else if (err.status === 401) {
+                    toastStore.trigger({
+                        message: "You aren't logged in",
+                        background: 'variant-filled-error'
+                    });
                 }
             }
         }
@@ -103,6 +104,24 @@
             ? `${client.request.config.BASE + data.post.location}`
             : `${client.request.config.BASE + data.post.location}?size=720`;
     }
+
+    let value = '';
+    async function createComment() {
+        if (value) {
+            try {
+                await client.post.postCreateComment(data.post.id, {
+                    content: value
+                });
+            } catch (err: unknown) {
+                // Empty
+            }
+        } else {
+            toastStore.trigger({
+                message: 'Comment cannot be empty',
+                background: 'variant-filled-error'
+            });
+        }
+    }
 </script>
 
 <svelte:head>
@@ -134,4 +153,24 @@
             >
         </div>
     {/if}
+
+    <div class="flex flex-col gap-2 mt-2">
+        <strong class="text-lg">Comments:</strong>
+        <div class="w-[35rem] flex flex-col gap-4">
+            {#each data.comments as comment}
+                <Comment postId={data.post.id} {comment} />
+            {/each}
+        </div>
+        <textarea
+            name="Create comment"
+            cols="40"
+            rows="5"
+            class="w-fit textarea mt-2"
+            placeholder="Comment content..."
+            bind:value
+        />
+        <button class="btn variant-filled w-fit" on:click={createComment}>
+            Submit comment
+        </button>
+    </div>
 </div>

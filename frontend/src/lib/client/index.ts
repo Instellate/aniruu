@@ -12,12 +12,14 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 
 export type { AuthUri } from './models/AuthUri';
 export type { ClaimUsername } from './models/ClaimUsername';
+export type { CommentBody } from './models/CommentBody';
 export type { CreateBody } from './models/CreateBody';
 export type { EditPostBody } from './models/EditPostBody';
 export type { Error } from './models/Error';
 export { ErrorCode } from './models/ErrorCode';
 export type { IHeaderDictionary } from './models/IHeaderDictionary';
 export type { PostAuthorResponse } from './models/PostAuthorResponse';
+export type { PostComment } from './models/PostComment';
 export type { PostCreated } from './models/PostCreated';
 export { PostRating } from './models/PostRating';
 export type { PostResponse } from './models/PostResponse';
