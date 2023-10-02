@@ -93,11 +93,6 @@ public class PostController : ControllerBase
 
         foreach (ArraySegment<char> arraySegment in sortedTags)
         {
-            if (arraySegment.Count <= 0)
-            {
-                return BadRequest(new Error(400, ErrorCode.InvalidCharacters));
-            }
-
             bool isInvalid = true;
             foreach (char c in arraySegment)
             {
