@@ -1,6 +1,7 @@
 using Aniruu;
 using Aniruu.Database;
 using Aniruu.Middleware;
+using Aniruu.Utility;
 using Aniruu.Utility.OAuth;
 using Aniruu.Utility.Ratelimit;
 using Microsoft.EntityFrameworkCore;
@@ -39,8 +40,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContextFactory<AniruuContext>(o =>
     o.UseNpgsql(builder.Configuration["DB_CONN_STRING"]));
 // .UseSnakeCaseNamingConvention()); TODO: Enable when this works in .NET 8
-builder.Services.AddSingleton<OAuth2>();
 
+builder.Services.AddSingleton<OAuth2>();
 builder.Services.AddSingleton<Limits>();
 builder.Services.AddSingleton<IMinioClient, MinioClient>(_ =>
     new MinioClient()
@@ -50,6 +51,7 @@ builder.Services.AddSingleton<IMinioClient, MinioClient>(_ =>
             builder.Configuration["MINIO_SECRET_KEY"]
         )
         .Build());
+builder.Services.AddSingleton<Caches>();
 
 WebApplication app = builder.Build();
 

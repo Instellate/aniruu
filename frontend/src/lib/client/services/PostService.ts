@@ -4,9 +4,10 @@
 /* eslint-disable */
 import type { CommentBody } from '../models/CommentBody';
 import type { EditPostBody } from '../models/EditPostBody';
-import type { PostComment } from '../models/PostComment';
+import type { PostCommentPage } from '../models/PostCommentPage';
 import type { PostCreated } from '../models/PostCreated';
 import type { PostResponse } from '../models/PostResponse';
+import type { PostsPage } from '../models/PostsPage';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -54,13 +55,13 @@ export class PostService {
     /**
      * @param page
      * @param tags
-     * @returns PostResponse
+     * @returns PostsPage
      * @throws ApiError
      */
     public postGetPosts(
         page: number = 1,
         tags?: Array<string> | null
-    ): CancelablePromise<Array<PostResponse>> {
+    ): CancelablePromise<PostsPage> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/api/Post',
@@ -155,10 +156,10 @@ export class PostService {
     /**
      * @param id
      * @param body
-     * @returns binary
+     * @returns string
      * @throws ApiError
      */
-    public postCreateComment(id: number, body: CommentBody): CancelablePromise<Blob> {
+    public postCreateComment(id: number, body: CommentBody): CancelablePromise<string> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/Post/{id}/comments',
@@ -172,13 +173,13 @@ export class PostService {
     /**
      * @param id
      * @param page
-     * @returns PostComment
+     * @returns PostCommentPage
      * @throws ApiError
      */
     public postGetComments(
         id: number,
-        page: number = 1
-    ): CancelablePromise<Array<PostComment>> {
+        page?: number
+    ): CancelablePromise<PostCommentPage> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/api/Post/{id}/comments',

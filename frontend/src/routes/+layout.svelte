@@ -7,7 +7,9 @@
         type PopupSettings,
         popup,
         initializeStores,
-        Toast
+        Toast,
+        Drawer,
+        getDrawerStore
     } from '@skeletonlabs/skeleton';
     import {
         computePosition,
@@ -49,6 +51,11 @@
         }
     }
 
+    const drawerStore = getDrawerStore();
+    function openDrawer() {
+        drawerStore.open({});
+    }
+
     const accountPopupSetting: PopupSettings = {
         event: 'click',
         target: 'accountPopup',
@@ -57,11 +64,35 @@
 </script>
 
 <Toast />
+<Drawer>
+    <div class="p-5 flex flex-col gap-3">
+        <SearchBar />
+        {#if $sidebarContent}
+            <svelte:component
+                this={$sidebarContent.component}
+                {...$sidebarContent.data}
+            />
+        {/if}
+    </div>
+</Drawer>
 
-<AppShell slotSidebarLeft="bg-surface-900 w-80 {$hideSidebarStore ? 'hidden' : ''}">
+<AppShell
+    slotSidebarLeft="bg-surface-900 w-0 lg:w-80 {$hideSidebarStore ? 'hidden' : ''}"
+>
     <svelte:fragment slot="header">
         <AppBar>
             <svelte:fragment slot="lead">
+                <div class="flex items-center">
+                    <button class="lg:hidden btn btn-sm mr-4" on:click={openDrawer}>
+                        <span>
+                            <svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
+                                <rect width="100" height="20" />
+                                <rect y="30" width="100" height="20" />
+                                <rect y="60" width="100" height="20" />
+                            </svg>
+                        </span>
+                    </button>
+                </div>
                 <strong class="text-xl uppercase"><a href="/">Aniruu</a></strong>
             </svelte:fragment>
             <svelte:fragment slot="trail">

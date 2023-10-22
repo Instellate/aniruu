@@ -1,13 +1,13 @@
 <script lang="ts">
     import { client } from '$lib';
     import PostTags from './PostTags.svelte';
-    import { preference, setSidebarContent } from '$lib/stores';
+    import { preference, setSidebarContent, userStore } from '$lib/stores';
     import { writable } from 'svelte/store';
     import type { PageData } from './$types';
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
     import { ApiError, type TagType } from '$lib/client';
-    import { getToastStore } from '@skeletonlabs/skeleton';
+    import { Paginator, getToastStore } from '@skeletonlabs/skeleton';
     import Comment from './Comment.svelte';
 
     const toastStore = getToastStore();
@@ -106,22 +106,50 @@
             : `${client.request.config.BASE + data.post.location}?size=720`;
     }
 
+    let commentError = '';
     let value = '';
     async function createComment() {
         if (value) {
             try {
-                await client.post.postCreateComment(data.post.id, {
+                const id = await client.post.postCreateComment(data.post.id, {
                     content: value
                 });
+                data.commentPage.comments = [
+                    ...data.commentPage.comments,
+                    {
+                        content: value,
+                        author: {
+                            id: $userStore?.id ?? 0,
+                            name: $userStore?.name ?? ''
+                        },
+                        createdAt: Date.now(),
+                        id: id
+                    }
+                ];
             } catch (err: unknown) {
                 // Empty
             }
         } else {
-            toastStore.trigger({
-                message: 'Comment cannot be empty',
-                background: 'variant-filled-error'
-            });
+            commentError = 'Comment cannot be empty';
         }
+    }
+
+    async function reloadComments(pageNum: number) {
+        data.commentPage = await client.post.postGetComments(data.post.id, pageNum);
+    }
+
+    async function nextPage(e: CustomEvent<number>) {
+        const pageNum = e.detail + 1;
+
+        try {
+            reloadComments(pageNum);
+        } catch (e: unknown) {
+            // Empty
+        }
+        const url = $page.url;
+        url.searchParams.set('commentPage', String(pageNum));
+        window.history.pushState({}, '', url);
+        data.currentPage = pageNum;
     }
 </script>
 
@@ -149,27 +177,47 @@
                 placeholder="Source"
                 bind:value={sourceStr}
             />
-            <button class="btn variant-ghost-surface w-fit" on:click={updatePost}
-                >Submit</button
-            >
+            <button class="btn variant-ghost-surface w-fit" on:click={updatePost}>
+                Submit
+            </button>
         </div>
     {/if}
 
     <div class="flex flex-col gap-2 mt-2">
         <strong class="text-lg">Comments:</strong>
-        <div class="w-[35rem] flex flex-col gap-4">
-            {#each data.comments as comment}
-                <Comment postId={data.post.id} {comment} />
+        <div class="lg:w-[35rem] flex flex-col gap-4">
+            {#each data.commentPage.comments as comment}
+                <Comment
+                    postId={data.post.id}
+                    {comment}
+                    on:delete={async () => reloadComments(data.currentPage)}
+                />
             {/each}
         </div>
+
+        <Paginator
+            showNumerals
+            showFirstLastButtons
+            on:page={nextPage}
+            controlVariant="variant-ghost-surface"
+            settings={{
+                page: data.currentPage - 1,
+                limit: 5,
+                size: data.commentPage.total,
+                amounts: []
+            }}
+        />
         <textarea
             name="Create comment"
             cols="40"
             rows="5"
             class="w-fit textarea mt-2"
+            class:input-error={commentError}
             placeholder="Comment content..."
             bind:value
+            on:input={() => (commentError = '')}
         />
+        <strong class="text-red-500 text-xs">{commentError}&nbsp;</strong>
         <button class="btn variant-filled w-fit" on:click={createComment}>
             Submit comment
         </button>

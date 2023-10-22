@@ -1,8 +1,12 @@
 <script lang="ts">
-    import { client } from '$lib';
-    import { ApiError, type PostComment } from '$lib/client';
+    import { client, hasFlag } from '$lib';
+    import { ApiError, UserPermission, type PostComment } from '$lib/client';
     import { getToastStore, popup } from '@skeletonlabs/skeleton';
+    import { userStore } from '$lib/stores';
     import SettingsSvg from './SettingsSvg.svelte';
+    import { createEventDispatcher } from 'svelte';
+
+    const dispatch = createEventDispatcher();
 
     export let comment: PostComment;
     export let postId: number;
@@ -21,6 +25,7 @@
                 }
             }
         }
+        dispatch('delete');
     }
 
     let editMode = false;
@@ -69,22 +74,36 @@
         >
             <SettingsSvg />
         </button>
-        <div data-popup="deleteCommentPopup-{comment.id}" class="card opacity-0" inert>
-            <!-- TODO: Make these buttons only appear for appropriate users -->
-            <div class="flex flex-col gap-0.5">
-                <button
-                    on:click={() => (editMode = true)}
-                    class="hover:bg-slate-600 duration-150 p-2 rounded-t-md"
-                >
-                    Edit
-                </button>
-                <button
-                    on:click={deleteComment}
-                    class="hover:bg-slate-600 duration-150 p-2 rounded-b-md"
-                >
-                    Delete
-                </button>
-            </div>
+        <div
+            data-popup="deleteCommentPopup-{comment.id}"
+            class="card opacity-0 overflow-hidden"
+            inert
+        >
+            {#if $userStore?.id === comment.author.id}
+                <div class="flex flex-col gap-0.5">
+                    <button
+                        on:click={() => (editMode = true)}
+                        class="hover:bg-slate-600 duration-150 p-2"
+                    >
+                        Edit
+                    </button>
+                    <button
+                        on:click={deleteComment}
+                        class="hover:bg-slate-600 duration-150 p-2"
+                    >
+                        Delete
+                    </button>
+                </div>
+            {:else if hasFlag($userStore?.permission ?? 0, UserPermission._128)}
+                <div class="flex flex-col gap-0.5">
+                    <button
+                        on:click={deleteComment}
+                        class="hover:bg-slate-600 duration-150 p-2"
+                    >
+                        Delete
+                    </button>
+                </div>
+            {/if}
         </div>
     </div>
     {#if editMode}

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Writable } from 'svelte/store';
-    import { hasFlag } from '$lib'
+    import { hasFlag } from '$lib';
     import type { PostTagsResponse } from '$lib/client';
     import { userStore } from '$lib/stores';
     import { UserPermission } from '$lib/client/models/UserPermission';
@@ -101,7 +101,7 @@
                     Delete
                 </button>
             </div>
-        {:else if hasFlag($userStore.permission, (UserPermission._2 | UserPermission._4))}
+        {:else if hasFlag($userStore.permission, UserPermission._2 | UserPermission._4)}
             <strong class="my-2">Actions:</strong>
             {#if hasFlag($userStore.permission, UserPermission._2)}
                 <div class="ml-2 text-blue-400">

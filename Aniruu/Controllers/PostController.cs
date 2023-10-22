@@ -26,16 +26,19 @@ public class PostController : ControllerBase
     private readonly ILogger<PostController> _logger;
     private readonly AniruuContext _db;
     private readonly IMinioClient _minio;
+    private readonly Caches _caches;
 
     public PostController(
         ILogger<PostController> logger,
         AniruuContext db,
-        IMinioClient minio
+        IMinioClient minio,
+        Caches caches
     )
     {
         this._logger = logger;
         this._db = db;
         this._minio = minio;
+        this._caches = caches;
     }
 
     [HttpPost]
@@ -303,37 +306,20 @@ public class PostController : ControllerBase
             return NotFound(new Error(404, ErrorCode.NoPostFound));
         }
 
-        PostResponse postResponse = new()
-        {
-            Id = post.Id,
-            Location = $"/api/post/{post.Id}",
-            CreatedAt = post.CreatedAt,
-            CreatedBy = new PostAuthorResponse(post.User.Id, post.User.Username),
-            Rating = post.Rating,
-            Source = post.Source,
-            Tags = new List<PostTagsResponse>(post.Tags.Count)
-        };
-
-
-        foreach (PostTags postTags in post.Tags)
-        {
-            postResponse.Tags.Add(
-                new PostTagsResponse(postTags.Tag.Type, postTags.Tag.Name)
-            );
-        }
+        PostResponse postResponse = new(post);
 
         return Ok(postResponse);
     }
 
     [HttpGet]
     [Produces("application/json")]
-    [ProducesResponseType<IEnumerable<PostResponse>>(200)]
+    [ProducesResponseType<PostsPage>(200)]
     public IActionResult GetPosts(
         [FromQuery] int page = 1,
         [FromQuery] string[]? tags = null
     )
     {
-        if (page >= 0)
+        if (page <= 0)
         {
             page = 1;
         }
@@ -346,6 +332,7 @@ public class PostController : ControllerBase
                 .Include(p => p.Tags)
                 .ThenInclude(t => t.Tag)
                 .Include(p => p.User);
+        long pageCount;
 
         List<Post> posts;
         if (tags is not null)
@@ -410,35 +397,32 @@ public class PostController : ControllerBase
                     p.Tags.Count(pt => allow.Any(at => at == pt.Tag.Id)) == allow.Count
                 )
                 .ToList();
+
+            pageCount = postsQuery
+                .Where(p => !p.Tags.Any(pt => disallow.Any(at => at == pt.Tag.Id)))
+                .Where(p =>
+                    p.Tags.Count(pt => allow.Any(at => at == pt.Tag.Id)) == allow.Count
+                )
+                .LongCount();
         }
         else
         {
             posts = postsQuery.ToList();
+            pageCount = this._db.Posts.LongCount() / 10;
         }
 
         List<PostResponse> postsResponse = new(posts.Count);
-
-        foreach (Post post in posts)
+        foreach (Post p in posts)
         {
-            PostResponse postResponse = new()
-            {
-                Id = post.Id,
-                Location = $"/api/post/{post.Id}",
-                CreatedAt = post.CreatedAt,
-                CreatedBy = new PostAuthorResponse(post.User.Id, post.User.Username),
-                Rating = post.Rating,
-                Source = post.Source,
-            };
-            postsResponse.Add(postResponse);
-
-            postResponse.Tags.Capacity = post.Tags.Count;
-            foreach (PostTags t in post.Tags)
-            {
-                postResponse.Tags.Add(new PostTagsResponse(t.Tag.Type, t.Tag.Name));
-            }
+            postsResponse.Add(new PostResponse(p));
         }
 
-        return Ok(postsResponse);
+        PostsPage postPage = new()
+        {
+            Total = pageCount,
+            Posts = postsResponse
+        };
+        return Ok(postPage);
     }
 
     [HttpGet("post/tags")]
@@ -705,6 +689,7 @@ public class PostController : ControllerBase
     }
 
     [HttpPost("{id}/comments")]
+    [ProducesResponseType<string>(201)]
     [Authorization(UserPermission.CreateComment)]
     public IActionResult CreateComment(long id, CommentBody body)
     {
@@ -731,23 +716,23 @@ public class PostController : ControllerBase
         this._db.Comments.Add(comment);
         this._db.SaveChanges();
 
-        return Created($"{id}/comments", null);
+        return Created($"{id}/comments", comment.Id);
     }
 
     [HttpGet("{id}/comments")]
     [Produces("application/json")]
     [ProducesResponseType<Error>(404)]
-    [ProducesResponseType<IEnumerable<PostComment>>(200)]
-    public IActionResult GetComments(long id, [FromQuery] int page = 1)
+    [ProducesResponseType<PostCommentPage>(200)]
+    public IActionResult GetComments(long id, [FromQuery] int page)
     {
-        if (page >= 0)
+        if (page <= 0)
         {
             page = 1;
         }
 
         Post? post = this._db.Posts
             .Include(p =>
-                p.Comments.Skip((page - 1) * 10).Take(10)
+                p.Comments.Skip((page - 1) * 5).Take(5)
             )
             .ThenInclude(c => c.User)
             .FirstOrDefault(p => p.Id == id);
@@ -757,8 +742,10 @@ public class PostController : ControllerBase
             return NotFound(new Error(404, ErrorCode.PostNotFound));
         }
 
+        IEnumerable<Comment> dbComments =
+            post.Comments.OrderBy(c => c.CreatedAt);
         List<PostComment> comments = new(post.Comments.Count);
-        foreach (Comment comment in post.Comments)
+        foreach (Comment comment in dbComments)
         {
             comments.Add(new PostComment
             {
@@ -769,7 +756,9 @@ public class PostController : ControllerBase
             });
         }
 
-        return Ok(comments.OrderBy(c => c.CreatedAt));
+        long totalComments = this._db.Comments.LongCount(c => c.PostId == id);
+
+        return Ok(new PostCommentPage(comments, totalComments));
     }
 
     [Authorization]
@@ -804,7 +793,7 @@ public class PostController : ControllerBase
 
         return Ok();
     }
-    
+
     [Authorization]
     [HttpPut("{postId}/comments/{commentId}")]
     [Produces("application/json")]

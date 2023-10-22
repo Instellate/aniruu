@@ -1,8 +1,6 @@
-import { browser } from '$app/environment';
 import { onMount, type ComponentType } from 'svelte';
 import { writable } from 'svelte/store';
 import type { UserPermission } from './client';
-import { client } from '$lib';
 
 export interface SidebarType {
     data: object;
@@ -13,6 +11,7 @@ export interface User {
     sessionToken: string;
     permission: UserPermission;
     id: number;
+    name: string;
 }
 
 export interface Preference {

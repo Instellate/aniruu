@@ -3,7 +3,7 @@ import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 import { ApiError } from '$lib/client';
 
-export const load = (async ({ params }) => {
+export const load = (async ({ params, url }) => {
     const num = Number(params.id);
     if (Number.isNaN(num)) {
         throw error(404, {
@@ -12,12 +12,16 @@ export const load = (async ({ params }) => {
     }
 
     try {
+        const pageStr = url.searchParams.get('commentPage');
+        const page = pageStr ? Number(pageStr) : 1;
+
         const post = await client.post.postGetPost(num);
-        const comments = await client.post.postGetComments(num);
+        const commentPage = await client.post.postGetComments(num, page);
 
         return {
             post: post,
-            comments: comments
+            commentPage: commentPage,
+            currentPage: page
         };
     } catch (e: unknown) {
         if (e instanceof ApiError) {

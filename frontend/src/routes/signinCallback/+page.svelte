@@ -1,9 +1,9 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
-    import { client } from '$lib';
+    import { changeUserSessionToken, client } from '$lib';
     import { ApiError, type ClaimUsername } from '$lib/client';
-    import { hideSidebar, userStore } from '$lib/stores';
+    import { hideSidebar } from '$lib/stores';
 
     let input = '';
     let errorMessage = '';
@@ -29,9 +29,7 @@
 
         try {
             const response = await client.account.accountClaimUsername(body);
-            userStore.set({
-                sessionToken: response.sessionToken
-            });
+            await changeUserSessionToken(response.sessionToken);
 
             window.localStorage.setItem('token', response.sessionToken);
             await goto('/');
@@ -84,9 +82,7 @@
     hideSidebar();
 
     if (newAccount === 'false') {
-        userStore.set({
-            sessionToken: token ?? ''
-        });
+        changeUserSessionToken('');
         window.localStorage.setItem('token', token ?? '');
         goto('/');
     }

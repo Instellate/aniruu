@@ -12,6 +12,7 @@ export const load = (async ({ url }) => {
     const response = await client.post.postGetPosts(page, tags);
 
     return {
-        posts: response
+        posts: response.posts,
+        total: response.total
     };
 }) satisfies PageLoad;

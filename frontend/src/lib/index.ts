@@ -5,7 +5,7 @@ import { ApiClient, UserPermission } from './client';
 import { userStore } from './stores';
 
 export const client = new ApiClient({
-    BASE: 'http://localhost:5100'
+    BASE: import.meta.env.VITE_API_URI
 });
 
 export function hasFlag(one: number, two: number) {
@@ -20,18 +20,23 @@ userStore.subscribe((u) => {
     }
 });
 
-if (browser) {
-    (async () => {
-        const token = window.localStorage.getItem('token');
-        if (token !== null) {
-            client.request.config.TOKEN = token;
-            const user = await client.user.userGetUserMe();
+export async function changeUserSessionToken(token: string) {
+    if (token) {
+        client.request.config.TOKEN = token;
+        const user = await client.user.userGetUserMe();
 
-            userStore.set({
-                sessionToken: token,
-                permission: user.permission ?? (0 as UserPermission),
-                id: user.id
-            });
-        }
-    })();
+        userStore.set({
+            sessionToken: token,
+            permission: user.permission ?? (0 as UserPermission),
+            id: user.id,
+            name: user.username
+        });
+    } else {
+        client.request.config.TOKEN = undefined;
+    }
+}
+
+if (browser) {
+    const token = window.localStorage.getItem('token');
+    changeUserSessionToken(token ?? '');
 }

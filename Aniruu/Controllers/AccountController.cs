@@ -17,8 +17,6 @@ namespace Aniruu.Controllers;
 [EnableRateLimiting("default")]
 public class AccountController : ControllerBase
 {
-    private static readonly IMemoryCache NewUserCache =
-        new MemoryCache(new MemoryCacheOptions());
 
     private static readonly char[] AllowedNameChars =
         "abcdefghijklmnopqrstuvwxyz1234567890_.".ToCharArray();
@@ -27,18 +25,21 @@ public class AccountController : ControllerBase
     private readonly Limits _limits;
     private readonly ILogger<AccountController> _logger;
     private readonly OAuth2 _oAuth2;
+    private readonly Caches _caches;
 
     public AccountController(
         ILogger<AccountController> logger,
         Limits limits,
         AniruuContext db,
-        OAuth2 oAuth2
+        OAuth2 oAuth2,
+        Caches caches
     )
     {
         this._logger = logger;
         this._limits = limits;
         this._db = db;
         this._oAuth2 = oAuth2;
+        this._caches = caches;
     }
 
     /// <summary>
@@ -122,7 +123,7 @@ public class AccountController : ControllerBase
         else
         {
             Guid id = Guid.NewGuid();
-            NewUserCache.Set(id, info.Email, TimeSpan.FromMinutes(10));
+            this._caches.NewUserCache.Set(id, info.Email, TimeSpan.FromMinutes(10));
             return Redirect(
                 $"http://localhost:5173/signinCallback?newAccount=true&token={id}"
             );
@@ -237,7 +238,7 @@ public class AccountController : ControllerBase
             return Conflict(new Error(409, ErrorCode.NameAlreadyInUsage));
         }
 
-        if (!NewUserCache.TryGetValue(body.TemporaryToken, out string? email))
+        if (!this._caches.NewUserCache.TryGetValue(body.TemporaryToken, out string? email))
         {
             return NotFound(new Error(404, ErrorCode.NoTokenForClaimingName));
         }
