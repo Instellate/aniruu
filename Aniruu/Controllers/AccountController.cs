@@ -17,7 +17,6 @@ namespace Aniruu.Controllers;
 [EnableRateLimiting("default")]
 public class AccountController : ControllerBase
 {
-
     private static readonly char[] AllowedNameChars =
         "abcdefghijklmnopqrstuvwxyz1234567890_.".ToCharArray();
 
@@ -26,13 +25,15 @@ public class AccountController : ControllerBase
     private readonly ILogger<AccountController> _logger;
     private readonly OAuth2 _oAuth2;
     private readonly IMemoryCache _cache;
+    private readonly IConfiguration _config;
 
     public AccountController(
         ILogger<AccountController> logger,
         Limits limits,
         AniruuContext db,
         OAuth2 oAuth2,
-        IMemoryCache cache
+        IMemoryCache cache,
+        IConfiguration config
     )
     {
         this._logger = logger;
@@ -40,6 +41,7 @@ public class AccountController : ControllerBase
         this._db = db;
         this._oAuth2 = oAuth2;
         this._cache = cache;
+        this._config = config;
     }
 
     /// <summary>
@@ -118,14 +120,16 @@ public class AccountController : ControllerBase
             };
             this._db.Sessions.Add(session);
             await this._db.SaveChangesAsync(ct);
-            return Redirect($"http://localhost:5173/signinCallback?token={session.Id}");
+            return Redirect(
+                $"{this._config["FRONTEND_URI"]}/signinCallback?token={session.Id}"
+            );
         }
         else
         {
             Guid id = Guid.NewGuid();
             this._cache.Set($"acc;{id}", info.Email, TimeSpan.FromMinutes(10));
             return Redirect(
-                $"http://localhost:5173/signinCallback?newAccount=true&token={id}"
+                $"{this._config["FRONTEND_URI"]}/signinCallback?newAccount=true&token={id}"
             );
         }
     }
