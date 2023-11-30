@@ -22,7 +22,7 @@
             formData.append('body', JSON.stringify(jsonBody));
             formData.append('file', file);
 
-            const request = await fetch('http://localhost:5100/api/post', {
+            const request = await fetch(import.meta.env.VITE_API_URI +'/api/post', {
                 method: 'POST',
                 body: formData,
                 headers: {

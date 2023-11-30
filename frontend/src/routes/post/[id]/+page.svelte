@@ -114,20 +114,25 @@
                 const id = await client.post.postCreateComment(data.post.id, {
                     content: value
                 });
-                data.commentPage.comments = [
-                    ...data.commentPage.comments,
-                    {
-                        content: value,
-                        author: {
-                            id: $userStore?.id ?? 0,
-                            name: $userStore?.name ?? ''
-                        },
-                        createdAt: Date.now(),
-                        id: id
-                    }
-                ];
+
+                if (Math.ceil((data.commentPage.total + 1) / 5) <= data.currentPage) {
+                    data.commentPage.comments = [
+                        ...data.commentPage.comments,
+                        {
+                            content: value,
+                            author: {
+                                id: $userStore?.id ?? 0,
+                                name: $userStore?.name ?? ''
+                            },
+                            createdAt: Date.now(),
+                            id: id
+                        }
+                    ];
+                }
+
+                value = '';
             } catch (err: unknown) {
-                // Empty
+                commentError = 'Something unknown happened';
             }
         } else {
             commentError = 'Comment cannot be empty';
@@ -185,7 +190,7 @@
 
     <div class="flex flex-col gap-2 mt-2">
         <strong class="text-lg">Comments:</strong>
-        <div class="lg:w-[35rem] flex flex-col gap-4">
+        <div class="max-w-xs lg:max-w-none w-[35rem] flex flex-col gap-4">
             {#each data.commentPage.comments as comment}
                 <Comment
                     postId={data.post.id}
@@ -207,17 +212,20 @@
                 amounts: []
             }}
         />
+        
         <textarea
             name="Create comment"
             cols="40"
             rows="5"
-            class="w-fit textarea mt-2"
+            class="w-fit textarea mt-2 max-w-xs lg:max-w-none"
             class:input-error={commentError}
             placeholder="Comment content..."
             bind:value
             on:input={() => (commentError = '')}
         />
-        <strong class="text-red-500 text-xs">{commentError}&nbsp;</strong>
+        <strong class="text-red-500 text-xs" class:hidden={!commentError}>
+            {commentError}&nbsp;
+        </strong>
         <button class="btn variant-filled w-fit" on:click={createComment}>
             Submit comment
         </button>

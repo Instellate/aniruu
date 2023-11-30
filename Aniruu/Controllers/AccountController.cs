@@ -25,21 +25,21 @@ public class AccountController : ControllerBase
     private readonly Limits _limits;
     private readonly ILogger<AccountController> _logger;
     private readonly OAuth2 _oAuth2;
-    private readonly Caches _caches;
+    private readonly IMemoryCache _cache;
 
     public AccountController(
         ILogger<AccountController> logger,
         Limits limits,
         AniruuContext db,
         OAuth2 oAuth2,
-        Caches caches
+        IMemoryCache cache
     )
     {
         this._logger = logger;
         this._limits = limits;
         this._db = db;
         this._oAuth2 = oAuth2;
-        this._caches = caches;
+        this._cache = cache;
     }
 
     /// <summary>
@@ -123,7 +123,7 @@ public class AccountController : ControllerBase
         else
         {
             Guid id = Guid.NewGuid();
-            this._caches.NewUserCache.Set(id, info.Email, TimeSpan.FromMinutes(10));
+            this._cache.Set($"acc;{id}", info.Email, TimeSpan.FromMinutes(10));
             return Redirect(
                 $"http://localhost:5173/signinCallback?newAccount=true&token={id}"
             );
@@ -238,7 +238,7 @@ public class AccountController : ControllerBase
             return Conflict(new Error(409, ErrorCode.NameAlreadyInUsage));
         }
 
-        if (!this._caches.NewUserCache.TryGetValue(body.TemporaryToken, out string? email))
+        if (!this._cache.TryGetValue($"acc;{body.TemporaryToken}", out string? email))
         {
             return NotFound(new Error(404, ErrorCode.NoTokenForClaimingName));
         }

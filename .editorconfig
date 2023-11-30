@@ -29,4 +29,5 @@ indent_size = 4
 insert_final_newline = true
 charset = utf-8
 csharp_preserve_single_line_statements = false
-csharp_wrap_arguments_style=chop_if_long
+csharp_wrap_arguments_style = chop_if_long
+csharp_style_prefer_primary_constructors = false

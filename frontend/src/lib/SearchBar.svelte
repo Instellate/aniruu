@@ -22,7 +22,6 @@
     let input = '';
     let manipulatedInput = '';
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const onInputChange = debounce(async () => {
         if (input === '') return;
 
@@ -46,7 +45,7 @@
                 };
             });
 
-        htmlInput.focus();
+            if (htmlInput !== null) htmlInput.focus();
     }, 300);
 
     function onSelect(event: CustomEvent<AutocompleteOption>): void {

@@ -1,5 +1,7 @@
+using System.Text;
 using Aniruu.Database;
 using Aniruu.Database.Entities;
+using Aniruu.Migrations;
 using Aniruu.Request;
 using Aniruu.Response;
 using Aniruu.Response.Post;
@@ -8,6 +10,8 @@ using Media;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Primitives;
 using Minio;
 using Minio.DataModel;
 using Minio.Exceptions;
@@ -26,19 +30,22 @@ public class PostController : ControllerBase
     private readonly ILogger<PostController> _logger;
     private readonly AniruuContext _db;
     private readonly IMinioClient _minio;
-    private readonly Caches _caches;
+    private readonly IMemoryCache _cache;
+    private readonly Limits _limits;
 
     public PostController(
         ILogger<PostController> logger,
         AniruuContext db,
         IMinioClient minio,
-        Caches caches
+        IMemoryCache cache,
+        Limits limits
     )
     {
         this._logger = logger;
         this._db = db;
         this._minio = minio;
-        this._caches = caches;
+        this._cache = cache;
+        this._limits = limits;
     }
 
     [HttpPost]
@@ -53,6 +60,8 @@ public class PostController : ControllerBase
         CancellationToken ct = default
     )
     {
+        body.Tags = Regexes.ExcessSpacing().Replace(body.Tags, " ");
+
         if (!this.ModelState.IsValid)
         {
             return StatusCode(500, new Error(500, ErrorCode.InternalError));
@@ -236,7 +245,10 @@ public class PostController : ControllerBase
         {
             return BadRequest(new Error(400, ErrorCode.NotAValidMediaType));
         }
-        // TODO: Make video like media a option as well, requires extraction of frame to make thumbnail
+        // TODO: Make video like media a option as well, requires extraction of frame to make thumbnail and etc
+
+        this._cache.Remove(body.Tags);
+        this._cache.Remove("");
 
         this._db.Posts.Add(post);
         await this._db.SaveChangesAsync(ct);
@@ -335,10 +347,12 @@ public class PostController : ControllerBase
         long pageCount;
 
         List<Post> posts;
+
         if (tags is not null)
         {
-            List<Guid> disallow = new();
+            List<Tag> dbTags = new(tags.Length);
             List<Guid> allow = new();
+            List<Guid> disallow = new();
 
             foreach (string tag in tags)
             {
@@ -377,6 +391,8 @@ public class PostController : ControllerBase
                         return NotFound(new Error(404, ErrorCode.TagNotFound));
                     }
 
+                    dbTags.Add(dbTag);
+
                     disallow.Add(dbTag.Id);
                 }
                 else
@@ -387,28 +403,64 @@ public class PostController : ControllerBase
                         return NotFound(new Error(404, ErrorCode.TagNotFound));
                     }
 
+                    dbTags.Add(dbTag);
+
                     allow.Add(dbTag.Id);
                 }
-            }
+            } // TODO: Refactor this into it's own util class
 
             posts = postsQuery
-                .Where(p => !p.Tags.Any(pt => disallow.Any(at => at == pt.Tag.Id)))
+                .Where(p =>
+                    !p.Tags.Any(pt => disallow.Any(at => at == pt.Tag.Id)))
                 .Where(p =>
                     p.Tags.Count(pt => allow.Any(at => at == pt.Tag.Id)) == allow.Count
                 )
                 .ToList();
 
-            pageCount = postsQuery
-                .Where(p => !p.Tags.Any(pt => disallow.Any(at => at == pt.Tag.Id)))
-                .Where(p =>
-                    p.Tags.Count(pt => allow.Any(at => at == pt.Tag.Id)) == allow.Count
+            string cacheKeyTags = string.Join(
+                ' ',
+                dbTags.Select(t =>
+                    $"{t.Type.ToString().ToLower()}:{t.Name.ToLower()}"
                 )
-                .LongCount();
+            );
+
+            if (this._cache.TryGetValue(cacheKeyTags, out long count))
+            {
+                pageCount = count;
+            }
+            else
+            {
+                pageCount = postsQuery
+                    .Where(p => !p.Tags.Any(pt => disallow.Any(at => at == pt.Tag.Id)))
+                    .Where(p =>
+                        p.Tags.Count(pt => allow.Any(at => at == pt.Tag.Id)) ==
+                        allow.Count
+                    )
+                    .LongCount();
+
+                MemoryCacheEntryOptions cacheEntryOptions = new()
+                {
+                    SlidingExpiration = TimeSpan.FromMinutes(1),
+                };
+                this._cache.Set(cacheKeyTags, pageCount, cacheEntryOptions);
+            }
         }
         else
         {
             posts = postsQuery.ToList();
-            pageCount = this._db.Posts.LongCount() / 10;
+            if (this._cache.TryGetValue(string.Empty, out long count))
+            {
+                pageCount = count;
+            }
+            else
+            {
+                pageCount = this._db.Posts.LongCount() / 10;
+                MemoryCacheEntryOptions cacheOptions = new()
+                {
+                    SlidingExpiration = TimeSpan.FromMinutes(2),
+                };
+                this._cache.Set(string.Empty, pageCount, cacheOptions);
+            }
         }
 
         List<PostResponse> postsResponse = new(posts.Count);
@@ -475,7 +527,9 @@ public class PostController : ControllerBase
 
         if (body.Tags is not null)
         {
-            ArraySegment<char> segTags = body.Tags.ToCharArray();
+            ArraySegment<char> segTags =
+                Regexes.ExcessSpacing().Replace(body.Tags, " ").ToCharArray();
+
             List<ArraySegment<char>> sortedTags = new();
 
             int index = ((IList<char>)segTags).IndexOf(' ');
@@ -633,8 +687,10 @@ public class PostController : ControllerBase
     )
     {
         Post? post = await this._db.Posts
-            .Include(t => t.Tags)
-            .FirstOrDefaultAsync(t => t.Id == id, ct);
+            .Include(p => p.Tags)
+            .ThenInclude(t => t.Tag)
+            .Include(p => p.Comments)
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
 
         User? user = (User?)HttpContext.Items["User"];
         if (user is null)
@@ -681,7 +737,16 @@ public class PostController : ControllerBase
             return StatusCode(500, new Error(500, ErrorCode.InternalError));
         }
 
+        string tags = string.Join(
+            ' ',
+            post.Tags.Select(t =>
+                $"{t.Tag.Type.ToString().ToLower()}:{t.Tag.Name.ToLower()}")
+        );
+        this._cache.Remove(tags);
+        this._cache.Remove("");
+
         this._db.PostTags.RemoveRange(post.Tags);
+        this._db.Comments.RemoveRange(post.Comments);
         this._db.Posts.Remove(post);
         await this._db.SaveChangesAsync(ct);
 

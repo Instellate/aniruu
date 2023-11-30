@@ -5,6 +5,7 @@ using Aniruu.Utility;
 using Aniruu.Utility.OAuth;
 using Aniruu.Utility.Ratelimit;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Minio;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -51,7 +52,9 @@ builder.Services.AddSingleton<IMinioClient, MinioClient>(_ =>
             builder.Configuration["MINIO_SECRET_KEY"]
         )
         .Build());
-builder.Services.AddSingleton<Caches>();
+builder.Services.AddSingleton<IMemoryCache, MemoryCache>(
+    (_) => new MemoryCache(new MemoryCacheOptions())
+);
 
 WebApplication app = builder.Build();
 
