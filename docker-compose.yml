@@ -1,0 +1,36 @@
+---
+version: 3.0
+
+services:
+  backend:
+    build: 
+      context: .
+      dockerfile: Aniruu/Dockerfile
+
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./backend-prop:/src/Properties
+
+  frontend:
+    build: 
+      context: frontend
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+
+  minio:
+    image: bitnami/minio:latest
+    volumes:
+      - ./minio_data:/data
+    environment:
+      - MINIO_ROOT_USER=username
+      - MINIO_ROOT_PASSWORD=betterpass
+      - MINIO_DEFAULT_BUCKETS=aniruu
+      
+  postgres:
+    image: postgres:11.22-alpine3.18
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=betterpass
+    volumes:
+      - ./db:/var/lib/postgresql/data

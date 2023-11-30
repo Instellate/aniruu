@@ -46,7 +46,7 @@ builder.Services.AddSingleton<OAuth2>();
 builder.Services.AddSingleton<Limits>();
 builder.Services.AddSingleton<IMinioClient, MinioClient>(_ =>
     new MinioClient()
-        .WithEndpoint("localhost", 9000)
+        .WithEndpoint(builder.Configuration["MINIO_HOST"], 9000)
         .WithCredentials(
             builder.Configuration["MINIO_ACCESS_KEY"],
             builder.Configuration["MINIO_SECRET_KEY"]
