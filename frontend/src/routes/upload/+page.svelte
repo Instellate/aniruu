@@ -41,7 +41,7 @@
                 await goto(`/post/${createPost.postId}`);
             } catch (err: unknown) {
                 if (err instanceof ApiError) {
-                    // Empty
+                    return;
                 }
             }
         }
@@ -75,7 +75,7 @@
                 class="input variant-form-material"
                 placeholder="Source"
                 bind:value={source}
-            />
+            /> <!--TODO: Make this better-->
             <button
                 class="btn variant-ghost-surface w-32"
                 disabled={isUploading}

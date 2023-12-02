@@ -22,7 +22,7 @@ namespace Aniruu.Controllers;
 public class PostController : ControllerBase
 {
     private static readonly char[] AllowedNameChars =
-        "abcdefghijklmnopqrstuvwxyz1234567890_.:".ToCharArray();
+        "abcdefghijklmnopqrstuvwxyz1234567890_.:()!?$@~".ToCharArray();
 
     private readonly ILogger<PostController> _logger;
     private readonly AniruuContext _db;
@@ -482,9 +482,9 @@ public class PostController : ControllerBase
     )
     {
         IEnumerable<string> tags = this._db.Tags
-            .Where(t => t.Name.StartsWith(tag.ToLower())
-                        || t.Name.EndsWith(tag.ToLower()))
+            .Where(t => t.Name.Contains(tag.ToLower()))
             .Select(t => t.Name)
+            .Take(50) 
             .AsEnumerable();
         // TODO: Still do some optimisation
 

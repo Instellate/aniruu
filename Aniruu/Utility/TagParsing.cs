@@ -1,14 +1,15 @@
 using System.Buffers;
+using System.Text.Unicode;
 
 namespace Aniruu.Utility;
 
 public sealed class TagParsing
 {
     private static readonly SearchValues<char> AllowedNameChars =
-        SearchValues.Create("abcdefghijklmnopqrstuvwxyz1234567890_.:");
+        SearchValues.Create("abcdefghijklmnopqrstuvwxyz1234567890_.:()!?$@~+-");
 
-    public HashSet<string> Allowed { get; } = new();
-    public HashSet<string> Disallowed { get; } = new();
+    public List<string> Allowed { get; } = new();
+    public List<string> Disallowed { get; } = new();
 
     public void ProcessString(string value)
     {
