@@ -16,5 +16,5 @@ RUN dotnet publish "Aniruu.csproj" -c Release -o /app/publish /p:UseAppHost=fals
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=publish /app/publish . 
 ENTRYPOINT ["dotnet", "Aniruu.dll"]

@@ -1,5 +1,5 @@
 ---
-version: 3.0
+version: "3.0"
 
 services:
   backend:
@@ -10,12 +10,11 @@ services:
     restart: unless-stopped
     env_file: .env
     volumes:
-      - ./backend-prop:/src/Properties
+      - ./Aniruu/appsettings.json:/app/appsettings.json
 
   frontend:
     build: 
       context: frontend
-      dockerfile: frontend/Dockerfile
     restart: unless-stopped
 
   minio:

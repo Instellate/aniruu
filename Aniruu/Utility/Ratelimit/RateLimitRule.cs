@@ -8,7 +8,6 @@ public sealed class RateLimitRule
 
     public RateLimitRule(IConfigurationSection section)
     {
-
         ReadOnlySpan<char> expireTimeSpan = section["ExpireTime"].AsSpan();
         if (expireTimeSpan.EndsWith("s"))
         {

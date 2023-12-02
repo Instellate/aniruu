@@ -13,12 +13,20 @@ public sealed class RateLimiter : IRateLimiterPolicy<string>
 
     public RateLimiter(IConfiguration config, ILogger<RateLimiter> logger)
     {
-        Dictionary<string, RateLimitRule> rules =
-            config.GetRequiredSection("RateLimitRules")
-                .GetChildren().ToDictionary(x => x.Key,
-                    x => new RateLimitRule(x));
-        this._rules = rules.ToFrozenDictionary();
         this._logger = logger;
+        if (!config.GetSection("RateLimitRules").Exists())
+        {
+            this._rules = FrozenDictionary<string, RateLimitRule>.Empty;
+        }
+        else
+        {
+            Dictionary<string, RateLimitRule> rules =
+                config.GetRequiredSection("RateLimitRules")
+                    .GetChildren().ToDictionary(x => x.Key,
+                        x => new RateLimitRule(x));
+            this._rules = rules.ToFrozenDictionary();
+        }
+        
     }
 
     public RateLimitPartition<string> GetPartition(HttpContext httpContext)
