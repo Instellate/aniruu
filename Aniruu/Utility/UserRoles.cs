@@ -10,7 +10,6 @@ public enum UserRoles
 {
     Normal = UserPermission.CreatePost | UserPermission.CreateComment,
     Trusted = Normal | UserPermission.EditPost,
-
     Moderator = Trusted | UserPermission.DeletePost | UserPermission.BanUser |
                 UserPermission.DeleteComment,
     Admin = Moderator | UserPermission.RemoveUser,

@@ -1,7 +1,5 @@
-using System.Text;
 using Aniruu.Database;
 using Aniruu.Database.Entities;
-using Aniruu.Migrations;
 using Aniruu.Request;
 using Aniruu.Response;
 using Aniruu.Response.Post;
@@ -11,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Primitives;
 using Minio;
 using Minio.DataModel;
 using Minio.Exceptions;
