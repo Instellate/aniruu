@@ -2,16 +2,28 @@
     import { client } from '$lib';
     import { Paginator } from '@skeletonlabs/skeleton';
     import type { PageData } from './$types';
+    import { env } from '$env/dynamic/public';
+    import { ApiError } from '$lib/client';
 
     export let data: PageData;
 
     async function changePage(e: CustomEvent<number>) {
         const page = e.detail;
+        try {
+            const posts = await client.post.postGetPosts(page);
+            data.posts = posts.posts;
+        } catch (err: unknown) {
+            if (err instanceof ApiError) {
+                // Empty
+            }
+        }
     }
 </script>
 
 <svelte:head>
-    <title>Posts</title>
+    <title>Post</title>
+    <meta property="og:title" content={env.PUBLIC_TITLE} />
+    <meta property="og:type" content="website" />
 </svelte:head>
 
 <div class="flex flex-col justify-between h-full">

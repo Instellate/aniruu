@@ -1,11 +1,12 @@
 // place files you want to import through the `$lib` alias in this folder.
 
 import { browser } from '$app/environment';
+import { env } from '$env/dynamic/public';
 import { ApiClient, UserPermission } from './client';
 import { userStore } from './stores';
 
 export const client = new ApiClient({
-    BASE: import.meta.env.VITE_API_URI
+    BASE: env.PUBLIC_API_URI
 });
 
 export function hasFlag(one: number, two: number) {

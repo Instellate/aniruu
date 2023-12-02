@@ -25,6 +25,7 @@
     import { browser } from '$app/environment';
     import { client, hasFlag } from '$lib';
     import { UserPermission } from '$lib/client';
+    import { env } from '$env/dynamic/public';
 
     initializeStores();
     storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
@@ -93,7 +94,9 @@
                         </span>
                     </button>
                 </div>
-                <strong class="text-xl uppercase"><a href="/">Aniruu</a></strong>
+                <strong class="text-xl uppercase">
+                    <a href="/">{env.PUBLIC_TITLE}</a>
+                </strong>
             </svelte:fragment>
             <svelte:fragment slot="trail">
                 {#if hasFlag($userStore?.permission ?? 0, UserPermission._1)}
@@ -122,15 +125,17 @@
                             <button
                                 on:click={signOut}
                                 class="btn bg-gradient-to-br variant-gradient-secondary-tertiary"
-                                >Sign out
+                            >
+                                Sign out
                             </button>
                         </div>
                     {:else}
                         <a
                             href="/signin"
                             class="btn bg-gradient-to-br variant-gradient-secondary-tertiary"
-                            >Sign In</a
                         >
+                            Sign In
+                        </a>
                     {/if}
                 </div></svelte:fragment
             >

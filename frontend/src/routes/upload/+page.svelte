@@ -3,6 +3,7 @@
     import { FileDropzone } from '@skeletonlabs/skeleton';
     import { ApiError, type CreateBody, type PostCreated } from '$lib/client';
     import { goto } from '$app/navigation';
+    import { env } from '$env/dynamic/public';
 
     let tags: string;
     let rating: number;
@@ -30,7 +31,7 @@
             formData.append('file', file);
 
             try {
-                const request = await fetch(import.meta.env.VITE_API_URI + '/api/post', {
+                const request = await fetch(env.PUBLIC_API_URI + '/api/post', {
                     method: 'POST',
                     body: formData,
                     headers: {
@@ -75,7 +76,8 @@
                 class="input variant-form-material"
                 placeholder="Source"
                 bind:value={source}
-            /> <!--TODO: Make this better-->
+            />
+            <!--TODO: Make this better-->
             <button
                 class="btn variant-ghost-surface w-32"
                 disabled={isUploading}

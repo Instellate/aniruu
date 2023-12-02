@@ -45,7 +45,7 @@
                 };
             });
 
-            if (htmlInput !== null) htmlInput.focus();
+        if (htmlInput !== null) htmlInput.focus();
     }, 300);
 
     function onSelect(event: CustomEvent<AutocompleteOption>): void {

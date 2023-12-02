@@ -9,6 +9,7 @@
     import { ApiError, type TagType } from '$lib/client';
     import { Paginator, getToastStore } from '@skeletonlabs/skeleton';
     import Comment from './Comment.svelte';
+    import { env } from '$env/dynamic/public';
 
     const toastStore = getToastStore();
 
@@ -160,6 +161,12 @@
 
 <svelte:head>
     <title>Post {data.post.id}</title>
+    <meta property="og:title" content="{env.PUBLIC_TITLE} - Post {data.post.id}" />
+    <meta property="og:type" content="website" />
+    <meta
+        property="og:image"
+        content="${client.request.config.BASE}${data.post.location}"
+    />
 </svelte:head>
 
 <div class="px-5 py-5 flex flex-col">
@@ -212,7 +219,7 @@
                 amounts: []
             }}
         />
-        
+
         <textarea
             name="Create comment"
             cols="40"
