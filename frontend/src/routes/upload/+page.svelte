@@ -1,15 +1,22 @@
 <script lang="ts">
     import { hideSidebar, userStore } from '$lib/stores';
     import { FileDropzone } from '@skeletonlabs/skeleton';
-    import type { CreateBody, PostCreated } from '$lib/client';
+    import { ApiError, type CreateBody, type PostCreated } from '$lib/client';
     import { goto } from '$app/navigation';
 
     let tags: string;
     let rating: number;
     let source: string;
     let files: FileList;
+    let isUploading = false;
 
     async function uploadFile(): Promise<void> {
+        if (isUploading) {
+            return;
+        } else {
+            isUploading = true;
+        }
+
         const file = files.item(0);
         if (file !== null) {
             const formData = new FormData();
@@ -22,16 +29,23 @@
             formData.append('body', JSON.stringify(jsonBody));
             formData.append('file', file);
 
-            const request = await fetch(import.meta.env.VITE_API_URI +'/api/post', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    Authorization: `Bearer ${$userStore?.sessionToken}`
+            try {
+                const request = await fetch(import.meta.env.VITE_API_URI + '/api/post', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        Authorization: `Bearer ${$userStore?.sessionToken}`
+                    }
+                });
+                const createPost: PostCreated = await request.json();
+                await goto(`/post/${createPost.postId}`);
+            } catch (err: unknown) {
+                if (err instanceof ApiError) {
+                    // Empty
                 }
-            });
-            const createPost: PostCreated = await request.json();
-            await goto(`/post/${createPost.postId}`);
+            }
         }
+        isUploading = false;
         return;
     }
 
@@ -62,7 +76,11 @@
                 placeholder="Source"
                 bind:value={source}
             />
-            <button class="btn variant-ghost-surface w-32" on:click={uploadFile}>
+            <button
+                class="btn variant-ghost-surface w-32"
+                disabled={isUploading}
+                on:click={uploadFile}
+            >
                 Upload
             </button>
         </div>

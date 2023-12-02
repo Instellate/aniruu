@@ -116,7 +116,7 @@ public class AccountController : ControllerBase
                 Id = Guid.NewGuid(),
                 UserAgent = this.Request.Headers.UserAgent!,
                 UserId = user.UserId,
-                Type = UserConnectionType.Google,
+                Type = type,
             };
             this._db.Sessions.Add(session);
             await this._db.SaveChangesAsync(ct);
@@ -126,8 +126,14 @@ public class AccountController : ControllerBase
         }
         else
         {
+            TemporaryUser temporaryUser = new()
+            {
+                Email = info.Email,
+                Type = type
+            };
+
             Guid id = Guid.NewGuid();
-            this._cache.Set($"acc;{id}", info.Email, TimeSpan.FromMinutes(10));
+            this._cache.Set($"acc;{id}", temporaryUser, TimeSpan.FromMinutes(10));
             return Redirect(
                 $"{this._config["FRONTEND_URI"]}/signinCallback?newAccount=true&token={id}"
             );
@@ -242,29 +248,29 @@ public class AccountController : ControllerBase
             return Conflict(new Error(409, ErrorCode.NameAlreadyInUsage));
         }
 
-        if (!this._cache.TryGetValue($"acc;{body.TemporaryToken}", out string? email))
+        if (!this._cache.TryGetValue($"acc;{body.TemporaryToken}",
+                out TemporaryUser? temporaryUser))
         {
             return NotFound(new Error(404, ErrorCode.NoTokenForClaimingName));
         }
 
-        if (email is null) // Should hopefully never occur
+        if (temporaryUser is null) // Should hopefully never occur
         {
             return StatusCode(500, new Error(500, ErrorCode.InternalError));
         }
 
         User user = new()
         {
-            PrimaryEmail = email,
-            Username = body.Name
+            PrimaryEmail = temporaryUser.Email,
+            Username = body.Name,
         };
         this._db.Users.Add(user);
-
 
         UserConnection connection = new()
         {
             Id = Guid.NewGuid(),
-            Email = email,
-            Type = UserConnectionType.Google,
+            Email = temporaryUser.Email,
+            Type = temporaryUser.Type,
             User = user,
         };
         this._db.Connections.Add(connection);
@@ -273,7 +279,7 @@ public class AccountController : ControllerBase
         {
             User = user,
             UserAgent = this.Request.Headers.UserAgent!,
-            Type = UserConnectionType.Google
+            Type = temporaryUser.Type
         };
 
         this._db.Sessions.Add(session);

@@ -80,7 +80,7 @@
     }
 
     let editValue = tagsToString();
-    let sourceStr = '';
+    let sourceStr = data.post.source;
 
     async function updatePost() {
         try {
