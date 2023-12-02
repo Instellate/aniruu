@@ -82,6 +82,12 @@ else
 app.UseRateLimiter();
 app.UseMiddleware<AuthorizationMiddleware>();
 
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    AniruuContext db = scope.ServiceProvider.GetRequiredService<AniruuContext>();
+    db.Database.Migrate();
+}
+
 #if DEBUG
 app.UseCors("testingPolicy");
 #endif
