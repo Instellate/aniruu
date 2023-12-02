@@ -39,8 +39,8 @@ builder.Services.AddCors(options =>
 #endif
 
 builder.Services.AddDbContextFactory<AniruuContext>(o =>
-    o.UseNpgsql(builder.Configuration["DB_CONN_STRING"]));
-// .UseSnakeCaseNamingConvention()); TODO: Enable when this works in .NET 8
+    o.UseNpgsql(builder.Configuration["DB_CONN_STRING"])
+    .UseSnakeCaseNamingConvention());
 
 builder.Services.AddSingleton<OAuth2>();
 builder.Services.AddSingleton<Limits>();

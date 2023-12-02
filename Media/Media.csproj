@@ -7,6 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="EFCore.NamingConventions" Version="8.0.0-rc.2" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
       <PackageReference Include="Minio" Version="5.0.0" />
       <PackageReference Include="NetVips" Version="2.3.1" />
       <PackageReference Include="NetVips.Native.linux-musl-x64" Version="8.14.4" />
