@@ -165,7 +165,7 @@
     <meta property="og:type" content="website" />
     <meta
         property="og:image"
-        content="${client.request.config.BASE}${data.post.location}"
+        content="{client.request.config.BASE}{data.post.location}"
     />
 </svelte:head>
 
