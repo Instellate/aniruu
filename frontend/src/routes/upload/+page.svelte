@@ -1,7 +1,7 @@
 <script lang="ts">
     import { hideSidebar, userStore } from '$lib/stores';
     import { FileDropzone } from '@skeletonlabs/skeleton';
-    import { ApiError, type CreateBody, type PostCreated } from '$lib/client';
+    import type { CreateBody, PostCreated } from '$lib/client';
     import { goto } from '$app/navigation';
     import { env } from '$env/dynamic/public';
 
@@ -39,12 +39,15 @@
                         Authorization: `Bearer ${$userStore?.sessionToken}`
                     }
                 });
+
+                if (request.status !== 201) {
+                    return;
+                }
+
                 const createPost: PostCreated = await request.json();
                 await goto(`/post/${createPost.postId}`);
             } catch (err: unknown) {
-                if (err instanceof ApiError) {
-                    return;
-                }
+                /* empty */
             }
         }
         isUploading = false;

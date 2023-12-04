@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Writable } from 'svelte/store';
     import { hasFlag } from '$lib';
-    import type { PostTagsResponse } from '$lib/client';
+    import { PostRating, type PostTagsResponse } from '$lib/client';
     import { userStore } from '$lib/stores';
     import { UserPermission } from '$lib/client/models/UserPermission';
 
@@ -10,6 +10,20 @@
     export let source: string | undefined;
     export let location: string;
     export let author: number;
+    export let rating: PostRating;
+
+    let ratingString = '';
+    switch (rating) {
+        case PostRating._0:
+            ratingString = 'Safe';
+            break;
+        case PostRating._1:
+            ratingString = 'Questionable';
+            break;
+        case PostRating._2:
+            ratingString = 'Explicit';
+            break;
+    }
 
     export let deletePostFunc: () => Promise<void>;
 
@@ -82,6 +96,8 @@
         {/each}
     </div>
 
+    <span class=" mt-4 my-2"><strong>Rating:</strong> {ratingString}</span>
+
     {#if source}
         <a href={source} class="font-bold mt-4 my-2 text-blue-400">Source</a>
     {/if}
@@ -92,7 +108,10 @@
         {#if $userStore.id === author}
             <strong class="my-2">Actions:</strong>
             <div class="ml-2 text-blue-400">
-                <button on:click={() => editMode.set(true)} class="ml-2 text-blue-400">
+                <button
+                    on:click={() => editMode.set($editMode ? false : true)}
+                    class="ml-2 text-blue-400"
+                >
                     Edit
                 </button>
             </div>

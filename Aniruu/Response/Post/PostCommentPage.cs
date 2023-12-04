@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
-
 namespace Aniruu.Response.Post;
 
 public class PostCommentPage

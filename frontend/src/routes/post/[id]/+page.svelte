@@ -20,6 +20,7 @@
     async function deletePost() {
         try {
             await client.post.postDeletePost(data.post.id);
+            await goto('/');
         } catch (err: unknown) {
             if (err instanceof ApiError) {
                 if (err.status === 403) {
@@ -45,7 +46,8 @@
             source: data.post.source,
             location: `${client.request.config.BASE}${data.post.location}`,
             deletePostFunc: deletePost,
-            author: data.post.createdBy.id
+            author: data.post.createdBy.id,
+            rating: data.post.rating
         }
     });
 
@@ -180,8 +182,7 @@
             <textarea
                 placeholder="Tags..."
                 rows="4"
-                cols="50"
-                class="textarea w-fit"
+                class="textarea w-fit lg:w-96"
                 bind:value={editValue}
             />
             <input

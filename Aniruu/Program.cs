@@ -1,7 +1,6 @@
 using Aniruu;
 using Aniruu.Database;
 using Aniruu.Middleware;
-using Aniruu.Utility;
 using Aniruu.Utility.OAuth;
 using Aniruu.Utility.Ratelimit;
 using Microsoft.EntityFrameworkCore;

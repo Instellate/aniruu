@@ -2,7 +2,6 @@ using Aniruu.Database;
 using Aniruu.Database.Entities;
 using Aniruu.Response;
 using Aniruu.Utility;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Aniruu.Controllers;

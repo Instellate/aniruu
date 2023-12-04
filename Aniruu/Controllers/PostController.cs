@@ -1,3 +1,4 @@
+using System.Buffers;
 using Aniruu.Database;
 using Aniruu.Database.Entities;
 using Aniruu.Request;
@@ -7,7 +8,6 @@ using Aniruu.Utility;
 using Media;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Caching.Memory;
 using Minio;
 using Minio.DataModel;
@@ -21,8 +21,9 @@ namespace Aniruu.Controllers;
 [ApiController]
 public class PostController : ControllerBase
 {
-    private static readonly char[] AllowedNameChars =
-        "abcdefghijklmnopqrstuvwxyz1234567890_.:()!?$@~".ToCharArray();
+    private static readonly SearchValues<char> AllowedNameChars =
+        SearchValues.Create("abcdefghijklmnopqrstuvwxyz1234567890_.:()!?$@~");
+
 
     private readonly ILogger<PostController> _logger;
     private readonly AniruuContext _db;
@@ -64,70 +65,26 @@ public class PostController : ControllerBase
             return StatusCode(500, new Error(500, ErrorCode.InternalError));
         }
 
-        ArraySegment<char> tags = body.Tags.ToCharArray();
-        List<ArraySegment<char>> sortedTags = new();
+        string[] sortedTags = body.Tags
+            .Split(' ',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct()
+            .Order()
+            .ToArray();
 
-        int index = ((IList<char>)tags).IndexOf(' ');
-        while (index != -1)
+        foreach (string str in sortedTags)
         {
-            sortedTags.Add(tags[..index]);
-            try
-            {
-                tags = tags[++index..];
-            }
-            catch (ArgumentOutOfRangeException)
-            {
-                break;
-            }
+            bool isInvalid =
+                str.AsSpan().IndexOfAnyExcept(AllowedNameChars) >= 0;
 
-            index = ((IList<char>)tags).IndexOf(' ');
-        }
-
-        sortedTags.Add(tags);
-
-        int count = 0;
-        HashSet<ArraySegment<char>> set = new();
-        foreach (ArraySegment<char> chars in sortedTags)
-        {
-            if (set.Add(chars))
-            {
-                count++;
-            }
-        }
-
-        if (count != sortedTags.Count)
-        {
-            return BadRequest(new Error(400, ErrorCode.DuplicateTags));
-        }
-
-        foreach (ArraySegment<char> arraySegment in sortedTags)
-        {
-            bool isInvalid = true;
-            foreach (char c in arraySegment)
-            {
-                foreach (char chr in AllowedNameChars)
-                {
-                    if (c == chr)
-                    {
-                        isInvalid = false;
-                        goto endLoopEarly;
-                    }
-                }
-            }
-
-            endLoopEarly:
-            int colonAmount = 0;
-            foreach (char c in arraySegment)
-            {
-                if (c == ':')
-                {
-                    colonAmount++;
-                }
-            }
-
-            if (colonAmount > 1)
+            if (str.Length <= 1)
             {
                 return BadRequest(new Error(400, ErrorCode.InvalidCharacters));
+            }
+
+            if (str.Length > this._limits.TagNameLimit)
+            {
+                return BadRequest(new Error(400, ErrorCode.NameTooBig));
             }
 
             if (isInvalid)
@@ -150,9 +107,9 @@ public class PostController : ControllerBase
             Source = body.Source
         };
 
-        foreach (ArraySegment<char> arrSegTag in sortedTags)
+        foreach (string arrTag in sortedTags)
         {
-            string tagStr = new(arrSegTag);
+            string tagStr = new(arrTag);
 
             int colonIndex = tagStr.IndexOf(':');
             string tagName;
@@ -170,7 +127,7 @@ public class PostController : ControllerBase
 
             if (dbTag is null)
             {
-                TagType tagType;
+                TagType? tagType;
                 if (colonIndex == -1)
                 {
                     tagType = TagType.General;
@@ -178,27 +135,17 @@ public class PostController : ControllerBase
                 else
                 {
                     string tagTypeStr = tagStr[..colonIndex];
-                    if (tagTypeStr == "artist")
+                    tagType = tagTypeStr switch
                     {
-                        tagType = TagType.Artist;
-                    }
-                    else if (tagTypeStr == "general")
-                    {
-                        tagType = TagType.General;
-                    }
-                    else if (tagTypeStr == "copyright")
-                    {
-                        tagType = TagType.Copyright;
-                    }
-                    else if (tagTypeStr == "character")
-                    {
-                        tagType = TagType.Character;
-                    }
-                    else if (tagTypeStr == "meta")
-                    {
-                        tagType = TagType.MetaData;
-                    }
-                    else
+                        "artist" => TagType.Artist,
+                        "character" => TagType.Character,
+                        "meta" => TagType.MetaData,
+                        "general" => TagType.General,
+                        "copyright" => TagType.Copyright,
+                        _ => null
+                    };
+
+                    if (tagType is null)
                     {
                         return BadRequest(new Error(400, ErrorCode.BadTagType));
                     }
@@ -207,7 +154,7 @@ public class PostController : ControllerBase
                 Tag newTag = new()
                 {
                     Name = colonIndex == -1 ? tagStr : tagStr[(colonIndex + 1)..],
-                    Type = tagType
+                    Type = tagType.Value
                 };
                 PostTags postTags = new()
                 {
@@ -333,7 +280,7 @@ public class PostController : ControllerBase
             page = 1;
         }
 
-        IIncludableQueryable<Post, User> postsQuery =
+        IQueryable<Post> postsQuery =
             this._db.Posts
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip((page - 1) * 10)
@@ -353,29 +300,33 @@ public class PostController : ControllerBase
 
             foreach (string tag in tags)
             {
-                bool all = true;
-                foreach (char t in tag.StartsWith('-') ? tag[1..] : tag)
+                if (tag.Length == 1)
                 {
-                    bool any = false;
-                    foreach (char c in AllowedNameChars)
+                    if (tag[0] == 's')
                     {
-                        if (c == t)
-                        {
-                            any = true;
-                            break;
-                        }
+                        postsQuery = postsQuery.Where(p => p.Rating == PostRating.Safe);
+                        continue;
+                    }
+                    else if (tag[0] == 'q')
+                    {
+                        postsQuery =
+                            postsQuery.Where(p => p.Rating == PostRating.Questionable);
+                        continue;
+                    }
+                    else if (tag[0] == 'e')
+                    {
+                        postsQuery =
+                            postsQuery.Where(p => p.Rating == PostRating.Explicit);
+                        continue;
                     }
 
-                    if (!any)
+                    bool isInvalid =
+                        (tag.StartsWith('-') ? tag[1..] : tag).AsSpan()
+                        .IndexOfAnyExcept(AllowedNameChars) >= 0;
+                    if (isInvalid)
                     {
-                        all = false;
-                        break;
+                        return BadRequest(new Error(400, ErrorCode.InvalidCharacters));
                     }
-                }
-
-                if (!all)
-                {
-                    return BadRequest(new Error(400, ErrorCode.InvalidCharacters));
                 }
 
                 if (tag[0] == '-')
@@ -484,7 +435,7 @@ public class PostController : ControllerBase
         IEnumerable<string> tags = this._db.Tags
             .Where(t => t.Name.Contains(tag.ToLower()))
             .Select(t => t.Name)
-            .Take(50) 
+            .Take(50)
             .AsEnumerable();
         // TODO: Still do some optimisation
 
@@ -524,51 +475,35 @@ public class PostController : ControllerBase
 
         if (body.Tags is not null)
         {
-            ArraySegment<char> segTags =
-                Regexes.ExcessSpacing().Replace(body.Tags, " ").ToCharArray();
+            string[] sortedTags = body.Tags
+                .Split(' ',
+                    StringSplitOptions.RemoveEmptyEntries |
+                    StringSplitOptions.TrimEntries)
+                .Distinct()
+                .Order()
+                .ToArray();
 
-            List<ArraySegment<char>> sortedTags = new();
-
-            int index = ((IList<char>)segTags).IndexOf(' ');
-            while (index != -1)
+            List<(TagType, string)> tags = new(sortedTags.Length);
+            foreach (string arrTag in sortedTags)
             {
-                sortedTags.Add(segTags[..index]);
-                try
+                bool isInvalid =
+                    arrTag.AsSpan().IndexOfAnyExcept(AllowedNameChars) >= 0;
+                if (isInvalid)
                 {
-                    segTags = segTags[++index..];
-                }
-                catch (ArgumentOutOfRangeException)
-                {
-                    break;
+                    return BadRequest(new Error(400, ErrorCode.InvalidCharacters));
                 }
 
-                index = ((IList<char>)segTags).IndexOf(' ');
-            }
-
-            sortedTags.Add(segTags);
-
-            List<(TagType, string)> tags = new(sortedTags.Count);
-            foreach (ArraySegment<char> arrSegTag in sortedTags)
-            {
-                foreach (char c in arrSegTag)
+                if (arrTag.Length <= 1)
                 {
-                    bool any = false;
-                    foreach (char ac in AllowedNameChars)
-                    {
-                        if (ac == c)
-                        {
-                            any = true;
-                            break;
-                        }
-                    }
-
-                    if (!any)
-                    {
-                        return BadRequest(new Error(400, ErrorCode.InvalidCharacters));
-                    }
+                    return BadRequest(new Error(400, ErrorCode.InvalidCharacters));
                 }
 
-                string tagStr = new(arrSegTag);
+                if (arrTag.Length > this._limits.TagNameLimit)
+                {
+                    return BadRequest(new Error(400, ErrorCode.NameTooBig));
+                }
+
+                string tagStr = new(arrTag);
 
                 int colonIndex = tagStr.IndexOf(':');
                 string tagName;

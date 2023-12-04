@@ -24,14 +24,16 @@
     let input = '';
 
     function getAllTags(): string {
-        return new URL(document.location.toString()).searchParams.getAll('tags').join(' ');
+        return new URL(document.location.toString()).searchParams
+            .getAll('tags')
+            .join(' ');
     }
 
     if (browser) {
         input = getAllTags();
     }
 
-    afterNavigate(() => input = getAllTags());
+    afterNavigate(() => (input = getAllTags()));
 
     let manipulatedInput = '';
 
@@ -63,7 +65,10 @@
         arr[arr.length - 1] = event.detail.label;
         input = arr.join(' ') + ' ';
 
-        setTimeout(() => htmlInput.focus(), 200);
+        setTimeout(() => {
+            htmlInput.focus();
+            htmlInput.selectionStart = htmlInput.selectionEnd = 10000;
+        }, 200);
     }
 
     async function onKeyup(event: KeyboardEvent): Promise<void> {
