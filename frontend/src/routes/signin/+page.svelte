@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { env } from '$env/dynamic/public';
     import { hideSidebar, sidebarContent } from '$lib/stores';
     import type { PageData } from './$types';
 
@@ -16,7 +17,7 @@
 </script>
 
 <svelte:head>
-    <title>Sign in</title>
+    <title>Sign in | {env.PUBLIC_TITLE}</title>
 </svelte:head>
 
 <div class="container mx-auto flex justify-center items-center h-full">

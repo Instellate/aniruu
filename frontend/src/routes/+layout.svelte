@@ -85,6 +85,7 @@
             <svelte:fragment slot="lead">
                 <div class="flex items-center">
                     <button class="lg:hidden btn btn-sm mr-4" on:click={openDrawer}>
+                        {#if !$hideSidebarStore}
                         <span>
                             <svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
                                 <rect width="100" height="20" />
@@ -92,6 +93,7 @@
                                 <rect y="60" width="100" height="20" />
                             </svg>
                         </span>
+                        {/if}
                     </button>
                 </div>
                 <strong class="text-xl uppercase">

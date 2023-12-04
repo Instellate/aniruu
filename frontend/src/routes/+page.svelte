@@ -21,8 +21,8 @@
 </script>
 
 <svelte:head>
-    <title>Post</title>
-    <meta property="og:title" content={env.PUBLIC_TITLE} />
+    <title>Post | {env.PUBLIC_TITLE}</title>
+    <meta property="og:title" content="Posts | {env.PUBLIC_TITLE}" />
     <meta property="og:type" content="website" />
 </svelte:head>
 

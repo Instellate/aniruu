@@ -160,8 +160,8 @@
 </script>
 
 <svelte:head>
-    <title>Post {data.post.id}</title>
-    <meta property="og:title" content="{env.PUBLIC_TITLE} - Post {data.post.id}" />
+    <title>Post {data.post.id} | {env.PUBLIC_TITLE}</title>
+    <meta property="og:title" content="Post {data.post.id} | {env.PUBLIC_TITLE}" />
     <meta property="og:type" content="website" />
     <meta
         property="og:image"

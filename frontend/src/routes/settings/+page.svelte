@@ -2,6 +2,7 @@
     import { setSidebarContent } from '$lib/stores';
     import type { PageData } from './$types';
     import Test from '$lib/Test.svelte';
+    import { env } from '$env/dynamic/public';
 
     export let data: PageData;
 
@@ -14,5 +15,5 @@
 </script>
 
 <svelte:head>
-    <title>Settings</title>
+    <title>Settings | {env.PUBLIC_TITLE}</title>
 </svelte:head>
