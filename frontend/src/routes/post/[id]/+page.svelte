@@ -167,6 +167,7 @@
         property="og:image"
         content="{client.request.config.BASE}{data.post.location}"
     />
+    <meta property="twitter:card" content="summary_large_image"/>
 </svelte:head>
 
 <div class="px-5 py-5 flex flex-col">
