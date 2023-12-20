@@ -483,7 +483,7 @@ public class PostController : ControllerBase
                 .Order()
                 .ToArray();
 
-            List<(TagType, string)> tags = new(sortedTags.Length);
+            List<(TagType?, string)> tags = new(sortedTags.Length);
             foreach (string arrTag in sortedTags)
             {
                 bool isInvalid =
@@ -516,10 +516,10 @@ public class PostController : ControllerBase
                     return BadRequest(new Error(400, ErrorCode.TagTypeWithoutName));
                 }
 
-                TagType tagType;
+                TagType? tagType;
                 if (colonIndex == -1)
                 {
-                    tagType = TagType.General;
+                    tagType = null;
                 }
                 else
                 {
@@ -553,14 +553,14 @@ public class PostController : ControllerBase
                 tags.Add((tagType, tagName));
             }
 
-            List<(TagType Type, string name)> tagsToAdd = new();
+            List<(TagType? Type, string name)> tagsToAdd = new();
             Dictionary<string, PostTags> dict = new(post.Tags.Count);
             foreach (PostTags tag in post.Tags)
             {
                 dict.Add(tag.Tag.Name, tag);
             }
 
-            foreach ((TagType, string) entry in tags)
+            foreach ((TagType?, string) entry in tags)
             {
                 if (!dict.ContainsKey(entry.Item2))
                 {
@@ -577,7 +577,7 @@ public class PostController : ControllerBase
                 this._db.PostTags.Remove(tagToRemove);
             }
 
-            foreach ((TagType, string) tagToAdd in tagsToAdd)
+            foreach ((TagType?, string) tagToAdd in tagsToAdd)
             {
                 Tag? tag = this._db.Tags.FirstOrDefault(t => t.Name == tagToAdd.Item2);
                 if (tag is null)
@@ -585,7 +585,7 @@ public class PostController : ControllerBase
                     Tag newTag = new()
                     {
                         Name = tagToAdd.Item2,
-                        Type = tagToAdd.Item1
+                        Type = tagToAdd.Item1 ?? TagType.General
                     };
                     PostTags postTags = new()
                     {
@@ -603,9 +603,9 @@ public class PostController : ControllerBase
                         Post = post,
                     };
                     this._db.PostTags.Add(postTags);
-                    if (tag.Type != tagToAdd.Item1)
+                    if (tagToAdd.Item1 is not null && tag.Type != tagToAdd.Item1)
                     {
-                        tag.Type = tagToAdd.Item1;
+                        tag.Type = tagToAdd.Item1.Value;
                     }
                 }
             }

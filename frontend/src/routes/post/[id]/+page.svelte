@@ -6,7 +6,7 @@
     import type { PageData } from './$types';
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
-    import { ApiError, type TagType } from '$lib/client';
+    import { ApiError } from '$lib/client';
     import { Paginator, getToastStore } from '@skeletonlabs/skeleton';
     import Comment from './Comment.svelte';
     import { env } from '$env/dynamic/public';
@@ -51,34 +51,10 @@
         }
     });
 
-    function tagTypeToString(type: TagType): string {
-        switch (type) {
-            case 0:
-                return 'general';
-            case 1:
-                return 'character';
-            case 2:
-                return 'artist';
-            case 3:
-                return 'copyright';
-            case 4:
-                return 'meta';
-            default:
-                return '';
-        }
-    }
-
     function tagsToString(): string {
         data.post.tags.sort((t) => t.type);
         return data.post.tags
-            .map((t) => {
-                const typeString = tagTypeToString(t.type);
-                if (typeString === 'general') {
-                    return t.name;
-                } else {
-                    return `${typeString}:${t.name}`;
-                }
-            })
+            .map((t) => t.name)
             .join(' ');
     }
 
