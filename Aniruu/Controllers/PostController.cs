@@ -603,6 +603,10 @@ public class PostController : ControllerBase
                         Post = post,
                     };
                     this._db.PostTags.Add(postTags);
+                    if (tag.Type != tagToAdd.Item1)
+                    {
+                        tag.Type = tagToAdd.Item1;
+                    }
                 }
             }
         }
