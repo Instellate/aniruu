@@ -548,6 +548,8 @@ public class PostController : ControllerBase
                     {
                         return BadRequest(new Error(400, ErrorCode.BadTagType));
                     }
+
+                    this._logger.LogInformation("Tag type is {Type}", tagType);
                 }
 
                 tags.Add((tagType, tagName));
@@ -568,7 +570,14 @@ public class PostController : ControllerBase
                 }
                 else
                 {
-                    dict.Remove(entry.Item2);
+                    if (dict[entry.Item2].Tag.Type != entry.Item1)
+                    {
+                        tagsToAdd.Add(entry);
+                    }
+                    else
+                    {
+                        dict.Remove(entry.Item2);
+                    }
                 }
             }
 
@@ -603,8 +612,13 @@ public class PostController : ControllerBase
                         Post = post,
                     };
                     this._db.PostTags.Add(postTags);
+                    this._logger.LogInformation(
+                        "Tag type is {Type}, original type is {TypeOrg}",
+                        tag.Type,
+                        tagToAdd.Item1);
                     if (tagToAdd.Item1 is not null && tag.Type != tagToAdd.Item1)
                     {
+                        _logger.LogInformation("Updating tag type");
                         tag.Type = tagToAdd.Item1.Value;
                     }
                 }
