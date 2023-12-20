@@ -40,19 +40,14 @@ public class ImageProcessing
         CancellationToken ct = default
     )
     {
-        using Image image = Image.NewFromStream(stream);
+        using Image image = Image.NewFromStream(stream, "", Enums.Access.Random);
 
         List<Task> uploadTask = new(Sizes.Length + 1);
 
-        if (checksum is null)
-        {
-            checksum = await CalculateChecksumAsync(stream, ct);
-            stream.Seek(0, SeekOrigin.Begin);
-        }
+        checksum ??= await CalculateChecksumAsync(stream, ct);
 
         foreach (int size in Sizes)
         {
-            stream.Seek(0, SeekOrigin.Begin);
             using Image resized = image.ThumbnailImage(
                 size,
                 size,
